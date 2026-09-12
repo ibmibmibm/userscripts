@@ -35,7 +35,12 @@ function start(site: Site): void {
     searchByIswc: (iswc) => searchByIswc(iswc),
     searchByTitle: (title) => searchByTitle(title),
     lookupWork: (mbid) => lookupWork(mbid),
-    open: (url) => window.open(url, "_blank", "noopener"),
+    // Contract: returns null only when the browser blocked the popup.
+    open: (url) => {
+      const w = window.open(url, "_blank");
+      if (w) w.opener = null;
+      return w;
+    },
   };
   setInterval(() => enhance(document, site, deps), 1000);
 }

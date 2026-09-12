@@ -12,6 +12,7 @@ export interface UiDeps {
   searchByIswc: (iswc: string) => Promise<WorkHit[]>;
   searchByTitle: (title: string) => Promise<WorkHit[]>;
   lookupWork: (mbid: string) => Promise<MbWork>;
+  /** Opens the URL in a new tab. Returns null only when the browser blocked the popup. */
   open: (url: string) => Window | null;
 }
 
