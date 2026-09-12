@@ -2,7 +2,7 @@ import type { Credit, TitleLine, WorkInfo } from "./types";
 
 /** Trimmed text content. Inner whitespace, including U+3000, is kept. */
 export function textOf(el: Element | null | undefined): string {
-  return (el?.textContent ?? "").replace(/ /g, " ").trim();
+  return (el?.textContent ?? "").replace(/\u00a0/g, " ").trim();
 }
 
 export function orNull(s: string): string | null {
@@ -38,7 +38,7 @@ export function cellLines(td: Element): (string | null)[] {
   }
   lines.push(current);
   return lines.map((l) => {
-    const t = l.replace(/ /g, " ").trim();
+    const t = l.replace(/\u00a0/g, " ").trim();
     return t === "" || t === "－" || t === "-" ? null : t;
   });
 }
