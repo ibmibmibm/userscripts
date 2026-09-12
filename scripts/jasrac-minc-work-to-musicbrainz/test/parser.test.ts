@@ -120,13 +120,13 @@ describe("parseMinc", () => {
       { kind: "正題", title: "ＹＯＵＴＨＦＵＬ", kana: null, romaji: null, searchName: false },
       { kind: "副題", title: "オープニング／ちはやふる（ＮＴＶ系アニメ）", kana: null, romaji: null, searchName: false },
     ]);
-    expect(info.artists).toEqual(["９９ Ｒａｄｉｏ Ｓｅｒｖｉｃｅ"]);
+    expect(info.artists).toEqual(["９９　Ｒａｄｉｏ　Ｓｅｒｖｉｃｅ"]);
     expect(info.credits).toEqual([
-      { source: "JASRAC", name: "堀内 孝太", role: "作詞", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "堀内 孝平", role: "作詞", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "堀内 孝太", role: "作曲", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "堀内 孝平", role: "作曲", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "日本テレビ音楽 株式会社", role: "出版者", trust: "JASRAC", society: null, note: null },
+      { source: "JASRAC", name: "堀内　孝太", role: "作詞", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "堀内　孝平", role: "作詞", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "堀内　孝太", role: "作曲", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "堀内　孝平", role: "作曲", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "日本テレビ音楽　株式会社", role: "出版者", trust: "JASRAC", society: null, note: null },
     ]);
   });
 
@@ -138,11 +138,11 @@ describe("parseMinc", () => {
     expect(info.nextoneCode).toBe("N00913658");
     expect(info.iswc).toBe("T-302.445.339-8");
     expect(info.titles).toEqual([{ kind: "正題", title: "ダーリンダンス", kana: null, romaji: null, searchName: false }]);
-    expect(info.artists).toEqual(["神田 沙也加", "Ｋｏｔｏｎｅ", "ＭｏｎｓｔｅｒＺ ＭＡＴＥ"]);
+    expect(info.artists).toEqual(["神田　沙也加", "Ｋｏｔｏｎｅ", "ＭｏｎｓｔｅｒＺ　ＭＡＴＥ"]);
     expect(info.credits).toEqual([
       { source: "JASRAC", name: "かいりきベア", role: "作詞", trust: "無信託", society: null, note: null },
       { source: "JASRAC", name: "かいりきベア", role: "作曲", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "ドワンゴ 第７事業部", role: "出版者", trust: "部分信託", society: null, note: null },
+      { source: "JASRAC", name: "ドワンゴ　第７事業部", role: "出版者", trust: "部分信託", society: null, note: null },
       { source: "NexTone", name: "かいりきベア", role: "作詞", trust: null, society: null, note: null },
       { source: "NexTone", name: "株式会社 ドワンゴ 第七事業部", role: "出版社", trust: null, society: null, note: null },
       { source: "NexTone", name: "かいりきベア", role: "作曲", trust: null, society: null, note: null },

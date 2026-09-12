@@ -118,15 +118,9 @@ function headerFields(table: Element): Map<string, Element> {
   return fields;
 }
 
-function normalizeSpaces(s: string): string {
-  return s.replace(/　/g, " ");
-}
-
 function nonBlankLines(td: Element | undefined): string[] {
   if (!td) return [];
-  return cellLines(td)
-    .filter((l): l is string => l !== null)
-    .map((l) => normalizeSpaces(l));
+  return cellLines(td).filter((l): l is string => l !== null);
 }
 
 function splitSlash(s: string): string[] {
@@ -139,14 +133,7 @@ function mincJasracCredits(area: Element): Credit[] {
     const td = table.querySelectorAll("td");
     if (td.length < 2) continue;
     const [role = "", trust = ""] = splitSlash(textOf(td[1]));
-    out.push({
-      source: "JASRAC",
-      name: normalizeSpaces(textOf(td[0])),
-      role,
-      trust: orNull(trust),
-      society: null,
-      note: null,
-    });
+    out.push({ source: "JASRAC", name: textOf(td[0]), role, trust: orNull(trust), society: null, note: null });
   }
   return out;
 }
@@ -156,7 +143,7 @@ function mincNextoneCredits(area: Element): Credit[] {
   for (const table of Array.from(area.querySelectorAll("table")).slice(1)) {
     const td = table.querySelectorAll("td");
     if (td.length < 2) continue;
-    const names = splitSlash(normalizeSpaces(textOf(td[0]))).filter((n) => n.length > 0);
+    const names = splitSlash(textOf(td[0])).filter((n) => n.length > 0);
     const roles = splitSlash(textOf(td[1]));
     names.forEach((name, i) => {
       out.push({ source: "NexTone", name, role: roles[i] || "不明", trust: null, society: null, note: null });
@@ -172,7 +159,7 @@ export function parseMinc(doc: Document): WorkInfo | null {
   const fields = headerFields(head);
   // Validate that we have a proper header table by checking for required fields
   if (!fields.has("作品名") && !fields.has("作品コード")) return null;
-  const title = normalizeSpaces(textOf(fields.get("作品名")));
+  const title = textOf(fields.get("作品名"));
   const jasracCode = jasracCodeOf(textOf(fields.get("作品コード")));
   const iswc = iswcOf(textOf(fields.get("ISWC")));
   const titles: TitleLine[] = [{ kind: "正題", title, kana: null, romaji: null, searchName: false }];
