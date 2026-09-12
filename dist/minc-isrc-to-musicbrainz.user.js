@@ -56,7 +56,7 @@
   }
   async function runQuery(query, fetchFn) {
     const url = `${WS}?fmt=json&limit=25&query=${encodeURIComponent(query)}`;
-    const res = await fetchFn(url, { headers: { Accept: "application/json" } });
+    const res = await fetchFn(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15e3) });
     if (!res.ok) throw new Error(`MusicBrainz responded with HTTP ${res.status}`);
     const body = await res.json();
     const releases = Array.isArray(body.releases) ? body.releases : [];
@@ -124,7 +124,13 @@ via MINC ISRC to MusicBrainz v${version}`;
   function buildMagicIsrcUrl(input) {
     const params = new URLSearchParams();
     if (input.mbid) params.set("musicbrainzid", input.mbid);
-    for (const e of input.entries) params.set(`isrc${e.medium}-${e.track}`, e.isrc);
+    const seen = /* @__PURE__ */ new Set();
+    for (const e of input.entries) {
+      const key = `isrc${e.medium}-${e.track}`;
+      if (seen.has(key)) throw new Error(`Duplicate ISRC slot ${key}`);
+      seen.add(key);
+      params.set(key, e.isrc);
+    }
     params.set("edit-note", input.editNote);
     return `https://magicisrc.kepstin.ca/?${params.toString()}`;
   }
@@ -141,8 +147,12 @@ via MINC ISRC to MusicBrainz v${version}`;
     return analysis.submittableDiscs.map((discPos) => {
       const disc = release.discs.find((d) => d.position === discPos);
       let medium = discPos;
-      if (hit) medium = mediaCount === 0 ? discPos : Math.min(discPos, mediaCount);
-      return { disc: discPos, included: disc.kind === "audio", medium };
+      let included = disc.kind === "audio";
+      if (hit) {
+        medium = mediaCount === 0 ? discPos : Math.min(discPos, mediaCount);
+        if (mediaCount > 0 && discPos > mediaCount) included = false;
+      }
+      return { disc: discPos, included, medium };
     });
   }
   function mappingMarks(release, mapping, hit) {
@@ -152,6 +162,20 @@ via MINC ISRC to MusicBrainz v${version}`;
     if (hit.media.length < needed) {
       const plural = hit.media.length === 1 ? "medium" : "media";
       marks.push(`MusicBrainz release has ${hit.media.length} ${plural} but minc has ${needed} discs with ISRCs`);
+    }
+    const includedByMedium = /* @__PURE__ */ new Map();
+    for (const m of mapping) {
+      if (!m.included) continue;
+      const discs = includedByMedium.get(m.medium) ?? [];
+      discs.push(m.disc);
+      includedByMedium.set(m.medium, discs);
+    }
+    for (const medium of Array.from(includedByMedium.keys()).sort((a, b) => a - b)) {
+      const discs = includedByMedium.get(medium).slice().sort((a, b) => a - b);
+      if (discs.length < 2) continue;
+      const verb = discs.length === 2 ? "are both mapped" : "are all mapped";
+      const discList = discs.map((d) => `Disc ${d}`).join(" and ");
+      marks.push(`${discList} ${verb} to medium ${medium}; only one disc's ISRCs can be sent per medium`);
     }
     for (const m of mapping) {
       if (!m.included) continue;
@@ -382,7 +406,10 @@ via MINC ISRC to MusicBrainz v${version}`;
         const use = el(doc, "button", "btn btn-default btn-xs minc-isrc-mb-use", "Use this");
         use.type = "button";
         use.addEventListener("click", () => choose(h));
-        const desc = ` ${h.title} — ${h.artist} — ${h.date ?? "no date"} ${h.country ?? ""} — ${h.catalogNumbers.join(", ")} — ${mediaSummary(h)}`;
+        const dateSegment = `${h.date ?? "no date"}${h.country ? ` ${h.country}` : ""}`;
+        const catalogSegment = h.catalogNumbers.length > 0 ? h.catalogNumbers.join(", ") : "";
+        const segments = [h.title, h.artist, dateSegment, catalogSegment, mediaSummary(h)];
+        const desc = ` ${segments.filter(Boolean).join(" — ")}`;
         li.append(use, doc.createTextNode(desc));
         list.appendChild(li);
       }
@@ -427,8 +454,12 @@ via MINC ISRC to MusicBrainz v${version}`;
     open.addEventListener("click", () => {
       state.mapping = readMapping();
       const entries = collectEntries(release, state.mapping);
-      const url = buildMagicIsrcUrl({ mbid: state.hit?.mbid ?? null, editNote: buildEditNote(release, deps.version), entries });
-      deps.open(url);
+      try {
+        const url = buildMagicIsrcUrl({ mbid: state.hit?.mbid ?? null, editNote: buildEditNote(release, deps.version), entries });
+        deps.open(url);
+      } catch (e) {
+        setStatus(`MagicISRC URL not built (${e instanceof Error ? e.message : String(e)})`);
+      }
     });
     return true;
   }
