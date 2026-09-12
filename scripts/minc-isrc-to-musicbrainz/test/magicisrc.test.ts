@@ -66,4 +66,17 @@ describe("buildMagicIsrcUrl", () => {
     const url = buildMagicIsrcUrl({ mbid: null, editNote: "n", entries: [{ medium: 1, track: 1, isrc: "JPVP01106901" }] });
     expect(url).toBe("https://magicisrc.kepstin.ca/?isrc1-1=JPVP01106901&edit-note=n");
   });
+
+  it("throws when two entries would occupy the same slot", () => {
+    expect(() =>
+      buildMagicIsrcUrl({
+        mbid: null,
+        editNote: "n",
+        entries: [
+          { medium: 1, track: 1, isrc: "JPKI00311412" },
+          { medium: 1, track: 1, isrc: "JPKI00311439" },
+        ],
+      }),
+    ).toThrow("Duplicate ISRC slot isrc1-1");
+  });
 });

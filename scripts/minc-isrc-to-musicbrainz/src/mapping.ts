@@ -20,8 +20,12 @@ export function defaultMapping(release: MincRelease, analysis: Analysis, hit: Mb
   return analysis.submittableDiscs.map((discPos) => {
     const disc = release.discs.find((d) => d.position === discPos)!;
     let medium = discPos;
-    if (hit) medium = mediaCount === 0 ? discPos : Math.min(discPos, mediaCount);
-    return { disc: discPos, included: disc.kind === "audio", medium };
+    let included = disc.kind === "audio";
+    if (hit) {
+      medium = mediaCount === 0 ? discPos : Math.min(discPos, mediaCount);
+      if (mediaCount > 0 && discPos > mediaCount) included = false;
+    }
+    return { disc: discPos, included, medium };
   });
 }
 
@@ -33,6 +37,22 @@ export function mappingMarks(release: MincRelease, mapping: DiscMapping[], hit: 
     const plural = hit.media.length === 1 ? "medium" : "media";
     marks.push(`MusicBrainz release has ${hit.media.length} ${plural} but minc has ${needed} discs with ISRCs`);
   }
+
+  const includedByMedium = new Map<number, number[]>();
+  for (const m of mapping) {
+    if (!m.included) continue;
+    const discs = includedByMedium.get(m.medium) ?? [];
+    discs.push(m.disc);
+    includedByMedium.set(m.medium, discs);
+  }
+  for (const medium of Array.from(includedByMedium.keys()).sort((a, b) => a - b)) {
+    const discs = includedByMedium.get(medium)!.slice().sort((a, b) => a - b);
+    if (discs.length < 2) continue;
+    const verb = discs.length === 2 ? "are both mapped" : "are all mapped";
+    const discList = discs.map((d) => `Disc ${d}`).join(" and ");
+    marks.push(`${discList} ${verb} to medium ${medium}; only one disc's ISRCs can be sent per medium`);
+  }
+
   for (const m of mapping) {
     if (!m.included) continue;
     const disc = release.discs.find((d) => d.position === m.disc)!;

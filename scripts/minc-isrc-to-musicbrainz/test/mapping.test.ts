@@ -38,11 +38,14 @@ describe("defaultMapping", () => {
     expect(m[11]).toEqual({ disc: 12, included: true, medium: 12 });
   });
 
-  it("clamps to the last medium when MusicBrainz has fewer media", () => {
+  it("clamps to the last medium when MusicBrainz has fewer media, and excludes the disc that overflows it", () => {
     const r = parseProductModal(loadFixture("two-cd-duplicate"))!;
     const single = hit("barcode-single-cd");
     const m = defaultMapping(r, analyze(r), single);
-    expect(m.map((x) => x.medium)).toEqual([1, 1]);
+    expect(m).toEqual([
+      { disc: 1, included: true, medium: 1 },
+      { disc: 2, included: false, medium: 1 },
+    ]);
   });
 });
 
@@ -77,5 +80,36 @@ describe("mappingMarks", () => {
   it("returns nothing without a MusicBrainz release", () => {
     const r = parseProductModal(loadFixture("cd-bluray"))!;
     expect(mappingMarks(r, defaultMapping(r, analyze(r), null), null)).toEqual([]);
+  });
+
+  it("flags two included discs mapped to the same medium", () => {
+    const r = parseProductModal(loadFixture("two-cd-duplicate"))!;
+    const h = hit("barcode-single-cd");
+    const m = [
+      { disc: 1, included: true, medium: 1 },
+      { disc: 2, included: true, medium: 1 },
+    ];
+    const marks = mappingMarks(r, m, h);
+    expect(marks).toContain("Disc 1 and Disc 2 are both mapped to medium 1; only one disc's ISRCs can be sent per medium");
+  });
+
+  it("does not flag a collision when only one of the colliding discs is included", () => {
+    const r = parseProductModal(loadFixture("two-cd-duplicate"))!;
+    const h = hit("barcode-single-cd");
+    const m = defaultMapping(r, analyze(r), h);
+    const marks = mappingMarks(r, m, h);
+    expect(marks.join("\n")).not.toContain("both mapped to medium");
+  });
+
+  it("orders the collision mark after the fewer-media mark and before per-disc marks", () => {
+    const r = parseProductModal(loadFixture("two-cd-duplicate"))!;
+    const h = hit("barcode-single-cd");
+    const m = [
+      { disc: 1, included: true, medium: 1 },
+      { disc: 2, included: true, medium: 1 },
+    ];
+    const marks = mappingMarks(r, m, h);
+    expect(marks[0]).toBe("MusicBrainz release has 1 medium but minc has 2 discs with ISRCs");
+    expect(marks[1]).toBe("Disc 1 and Disc 2 are both mapped to medium 1; only one disc's ISRCs can be sent per medium");
   });
 });

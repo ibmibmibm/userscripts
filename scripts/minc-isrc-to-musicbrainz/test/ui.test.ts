@@ -129,6 +129,26 @@ describe("enhanceModalBody", () => {
     expect(body2.querySelector(".minc-isrc-mb-nombid")).not.toBeNull();
   });
 
+  it("unchecks a disc that overflows the chosen release's media, warns on collision, and refuses to build a duplicate URL", async () => {
+    const body = loadFixture("two-cd-duplicate");
+    const { d, opened } = deps({ search: async () => [hit("barcode-single-cd")] });
+    enhanceModalBody(body, d);
+    body.querySelector<HTMLButtonElement>(".minc-isrc-mb-submit")!.click();
+    await tick();
+
+    const boxes = body.querySelectorAll<HTMLInputElement>(".minc-isrc-mb-mapping input[type=checkbox]");
+    expect(Array.from(boxes).map((b) => b.checked)).toEqual([true, false]);
+    expect(body.querySelector(".minc-isrc-mb-warnings")!.textContent).not.toContain("both mapped to medium");
+
+    boxes[1].checked = true;
+    boxes[1].dispatchEvent(new (body.ownerDocument.defaultView as Window & typeof globalThis).Event("change"));
+    expect(body.querySelector(".minc-isrc-mb-warnings")!.textContent).toContain("both mapped to medium 1");
+
+    body.querySelector<HTMLButtonElement>(".minc-isrc-mb-open")!.click();
+    expect(opened).toHaveLength(0);
+    expect(body.querySelector(".minc-isrc-mb-status")!.textContent).toMatch(/^MagicISRC URL not built/);
+  });
+
   it("hides and clears the stale picker when searching again", async () => {
     const body = loadFixture("two-cd-duplicate");
     const hits = mbHits("catno-multi", toReleaseHit);

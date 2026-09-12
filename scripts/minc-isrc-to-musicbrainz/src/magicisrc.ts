@@ -35,7 +35,13 @@ export function buildEditNote(release: MincRelease, version: string): string {
 export function buildMagicIsrcUrl(input: { mbid: string | null; editNote: string; entries: MagicIsrcEntry[] }): string {
   const params = new URLSearchParams();
   if (input.mbid) params.set("musicbrainzid", input.mbid);
-  for (const e of input.entries) params.set(`isrc${e.medium}-${e.track}`, e.isrc);
+  const seen = new Set<string>();
+  for (const e of input.entries) {
+    const key = `isrc${e.medium}-${e.track}`;
+    if (seen.has(key)) throw new Error(`Duplicate ISRC slot ${key}`);
+    seen.add(key);
+    params.set(key, e.isrc);
+  }
   params.set("edit-note", input.editNote);
   return `https://magicisrc.kepstin.ca/?${params.toString()}`;
 }

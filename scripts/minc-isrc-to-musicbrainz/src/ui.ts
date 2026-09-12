@@ -221,8 +221,12 @@ export function enhanceModalBody(body: Element, deps: UiDeps): boolean {
   open.addEventListener("click", () => {
     state.mapping = readMapping();
     const entries = collectEntries(release, state.mapping);
-    const url = buildMagicIsrcUrl({ mbid: state.hit?.mbid ?? null, editNote: buildEditNote(release, deps.version), entries });
-    deps.open(url);
+    try {
+      const url = buildMagicIsrcUrl({ mbid: state.hit?.mbid ?? null, editNote: buildEditNote(release, deps.version), entries });
+      deps.open(url);
+    } catch (e) {
+      setStatus(`MagicISRC URL not built (${e instanceof Error ? e.message : String(e)})`);
+    }
   });
 
   return true;
