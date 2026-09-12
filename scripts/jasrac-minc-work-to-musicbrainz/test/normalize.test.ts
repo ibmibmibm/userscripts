@@ -19,16 +19,20 @@ describe("fold", () => {
 });
 
 describe("moveArticle", () => {
-  it("moves a trailing THE, A, or AN to the front", () => {
-    expect(moveArticle("ALMIGHTY THE")).toBe("THE ALMIGHTY");
-    expect(moveArticle("NEW WORLD FOOL A")).toBe("A NEW WORLD FOOL");
-    expect(moveArticle("Old Story an")).toBe("an Old Story");
+  it("moves a trailing THE, A, or AN that follows two or more spaces", () => {
+    expect(moveArticle("ALMIGHTY  THE")).toBe("THE ALMIGHTY");
+    expect(moveArticle("NEW WORLD FOOL  A")).toBe("A NEW WORLD FOOL");
+    expect(moveArticle("ＡＬＭＩＧＨＴＹ　　ＴＨＥ")).toBe("THE ALMIGHTY");
+    expect(moveArticle("Old Story   an")).toBe("an Old Story");
   });
-  it("leaves other titles alone", () => {
+  it("leaves single-spaced and other titles alone", () => {
+    expect(moveArticle("PLAN A")).toBe("PLAN A");
+    expect(moveArticle("SIDE AN")).toBe("SIDE AN");
+    expect(moveArticle("ALMIGHTY THE")).toBe("ALMIGHTY THE");
     expect(moveArticle("DAZZLING SMILE")).toBe("DAZZLING SMILE");
     expect(moveArticle("THE END")).toBe("THE END");
     expect(moveArticle("A")).toBe("A");
-    expect(moveArticle("かるた日和 THE")).toBe("かるた日和 THE");
+    expect(moveArticle("かるた日和　　THE")).toBe("かるた日和 THE");
     expect(moveArticle("BREATHE")).toBe("BREATHE");
   });
 });

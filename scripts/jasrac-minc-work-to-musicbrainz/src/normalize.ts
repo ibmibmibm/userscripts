@@ -6,15 +6,20 @@ export function fold(s: string): string {
   return s.normalize("NFKC").replace(/\s+/g, " ").trim();
 }
 
-/** "ALMIGHTY THE" -> "THE ALMIGHTY". Only for titles without CJK characters. */
+/**
+ * "ALMIGHTY  THE" -> "THE ALMIGHTY". J-WID marks a moved article with two
+ * or more spaces (two U+3000 on the page). A single space is a real title
+ * ("PLAN A"). Only for titles without CJK characters. The result is folded.
+ */
 export function moveArticle(s: string): string {
-  if (CJK_CHAR.test(s)) return s;
-  const m = s.match(/^(.+) (THE|A|AN)$/i);
-  return m ? `${m[2]} ${m[1]}` : s;
+  const n = s.normalize("NFKC");
+  if (CJK_CHAR.test(n)) return fold(n);
+  const m = n.match(/^(.+?)\s{2,}(THE|A|AN)\s*$/i);
+  return m ? fold(`${m[2]} ${m[1]}`) : fold(n);
 }
 
 export function displayTitle(title: string): string {
-  return moveArticle(fold(title));
+  return moveArticle(title);
 }
 
 const JP_MARKERS = ["株式会社", "(株)", "有限会社", "合同会社"];

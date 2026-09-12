@@ -196,11 +196,13 @@ Parsing rules:
 
 - `fold(s)`: NFKC, then collapse runs of whitespace to one ASCII space,
   trim.
-- `moveArticle(s)`: when `s` has no character in the CJK ranges
-  (Hiragana, Katakana, CJK Unified Ideographs; Halfwidth and Fullwidth
-  Forms are already folded) and matches `/^(.+) (THE|A|AN)$/i`, return
-  `<article> <rest>`; else return `s`. Letter case is unchanged.
-- `displayTitle(t)`: `moveArticle(fold(t))`.
+- `moveArticle(s)`: NFKC first (U+3000 becomes a space). When the string
+  has no character in the CJK ranges (Hiragana, Katakana, CJK Unified
+  Ideographs) and matches `/^(.+?)\s{2,}(THE|A|AN)\s*$/i`, return the
+  folded `<article> <rest>`; else return the folded string. J-WID marks a
+  moved article with two U+3000 characters (`ＡＬＭＩＧＨＴＹ　　ＴＨＥ`); a
+  single space is a real title (`PLAN A`). Letter case is unchanged.
+- `displayTitle(t)`: `moveArticle(t)`.
 - `COMPANY_MARKERS`: `株式会社`, `(株)`, `有限会社`, `合同会社`, `Inc`,
   `Inc.`, `Ltd`, `Ltd.`, `LLC`, `Co.`, `Co., Ltd.`. The `㈱` form folds to
   `(株)` under NFKC.
