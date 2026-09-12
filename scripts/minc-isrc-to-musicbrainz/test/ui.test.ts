@@ -149,6 +149,34 @@ describe("enhanceModalBody", () => {
     expect(body.querySelector(".minc-isrc-mb-status")!.textContent).toMatch(/^MagicISRC URL not built/);
   });
 
+  it("builds the picker row description without double spaces when country and catalog numbers are missing", async () => {
+    const body = loadFixture("two-cd-duplicate");
+    const bare: MbReleaseHit = {
+      mbid: "00000000-0000-0000-0000-000000000000",
+      title: "Bare Release",
+      artist: "Nobody",
+      date: null,
+      country: null,
+      catalogNumbers: [],
+      barcode: null,
+      media: [{ position: 1, format: "CD", trackCount: 2 }],
+    };
+    const full = hit("barcode-single-cd");
+    const { d } = deps({ search: async () => [bare, full] });
+    enhanceModalBody(body, d);
+    body.querySelector<HTMLButtonElement>(".minc-isrc-mb-submit")!.click();
+    await tick();
+    const items = body.querySelectorAll<HTMLLIElement>(".minc-isrc-mb-picker .minc-isrc-mb-use");
+    expect(items.length).toBe(2);
+    const bareText = items[0].parentElement!.textContent!;
+    expect(bareText).not.toMatch(/ {2}/);
+    expect(bareText).not.toContain("— —");
+    expect(bareText).toContain("Bare Release — Nobody — no date — CD 2");
+    const fullText = items[1].parentElement!.textContent!;
+    expect(fullText).not.toMatch(/ {2}/);
+    expect(fullText).toContain(full.country!);
+  });
+
   it("hides and clears the stale picker when searching again", async () => {
     const body = loadFixture("two-cd-duplicate");
     const hits = mbHits("catno-multi", toReleaseHit);

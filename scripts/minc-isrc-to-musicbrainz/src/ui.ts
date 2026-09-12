@@ -174,7 +174,10 @@ export function enhanceModalBody(body: Element, deps: UiDeps): boolean {
       const use = el(doc, "button", "btn btn-default btn-xs minc-isrc-mb-use", "Use this");
       use.type = "button";
       use.addEventListener("click", () => choose(h));
-      const desc = ` ${h.title} — ${h.artist} — ${h.date ?? "no date"} ${h.country ?? ""} — ${h.catalogNumbers.join(", ")} — ${mediaSummary(h)}`;
+      const dateSegment = `${h.date ?? "no date"}${h.country ? ` ${h.country}` : ""}`;
+      const catalogSegment = h.catalogNumbers.length > 0 ? h.catalogNumbers.join(", ") : "";
+      const segments = [h.title, h.artist, dateSegment, catalogSegment, mediaSummary(h)];
+      const desc = ` ${segments.filter(Boolean).join(" — ")}`;
       li.append(use, doc.createTextNode(desc));
       list.appendChild(li);
     }
