@@ -124,7 +124,7 @@ function nonBlankLines(td: Element | undefined): string[] {
 }
 
 function splitSlash(s: string): string[] {
-  return s.split("/").map((p) => p.trim());
+  return s.split(/\s+\/(?:\s+|$)/).map((p) => p.trim());
 }
 
 function mincJasracCredits(area: Element): Credit[] {

@@ -166,6 +166,18 @@ describe("parseMinc", () => {
     ]);
   });
 
+  it("keeps a slash inside a NexTone name", () => {
+    const doc = mincDocument("minc-25707965-N00913658");
+    const table = doc.querySelectorAll("#nextone-area table")[1];
+    table.querySelectorAll("td")[0].innerHTML = "AC/DC / 株式会社 ドワンゴ 第七事業部";
+    table.querySelectorAll("td")[1].textContent = "作曲 / 出版社";
+    const info = parseMinc(doc)!;
+    expect(info.credits.filter((c) => c.source === "NexTone").slice(0, 2).map((c) => [c.name, c.role])).toEqual([
+      ["AC/DC", "作曲"],
+      ["株式会社 ドワンゴ 第七事業部", "出版社"],
+    ]);
+  });
+
   it("returns null without the JASRAC header table", () => {
     expect(parseMinc(emptyDocument("https://www.minc.or.jp/saku/detail/?jcd=1"))).toBeNull();
     const doc = mincDocument("minc-70342415");
