@@ -111,7 +111,7 @@
 
   // scripts/jasrac-minc-work-to-musicbrainz/src/parser.ts
   function textOf(el2) {
-    return (el2?.textContent ?? "").replace(/ /g, " ").trim();
+    return (el2?.textContent ?? "").replace(/\u00a0/g, " ").trim();
   }
   function orNull(s) {
     return s.length > 0 ? s : null;
@@ -141,7 +141,7 @@
     }
     lines.push(current);
     return lines.map((l) => {
-      const t = l.replace(/ /g, " ").trim();
+      const t = l.replace(/\u00a0/g, " ").trim();
       return t === "" || t === "－" || t === "-" ? null : t;
     });
   }
@@ -215,7 +215,7 @@
     return cellLines(td).filter((l) => l !== null);
   }
   function splitSlash(s) {
-    return s.split("/").map((p) => p.trim());
+    return s.split(/\s+\/(?:\s+|$)/).map((p) => p.trim());
   }
   function mincJasracCredits(area) {
     const out = [];
@@ -291,12 +291,13 @@
     return s.normalize("NFKC").replace(/\s+/g, " ").trim();
   }
   function moveArticle(s) {
-    if (CJK_CHAR.test(s)) return s;
-    const m = s.match(/^(.+) (THE|A|AN)$/i);
-    return m ? `${m[2]} ${m[1]}` : s;
+    const n = s.normalize("NFKC");
+    if (CJK_CHAR.test(n)) return fold(n);
+    const m = n.match(/^(.+?)\s{2,}(THE|A|AN)\s*$/i);
+    return m ? fold(`${m[2]} ${m[1]}`) : fold(n);
   }
   function displayTitle(title) {
-    return moveArticle(fold(title));
+    return moveArticle(title);
   }
   var JP_MARKERS = ["株式会社", "(株)", "有限会社", "合同会社"];
   var LATIN_MARKERS = ["Co., Ltd.", "Co.,Ltd.", "Inc.", "Inc", "Ltd.", "Ltd", "LLC", "Co."];
@@ -728,7 +729,12 @@
         }
       );
     };
-    search2.addEventListener("click", () => runSearch("title"));
+    search2.addEventListener("click", () => {
+      if (state.searching) return;
+      ref.value = "";
+      setTarget(null);
+      runSearch("title");
+    });
     const openUrl = (build) => {
       notice.textContent = "";
       const { url, dropped } = fitUrl(build, info, deps.version);
@@ -789,7 +795,12 @@
       searchByIswc: (iswc) => searchByIswc(iswc),
       searchByTitle: (title) => searchByTitle(title),
       lookupWork: (mbid) => lookupWork(mbid),
-      open: (url) => window.open(url, "_blank", "noopener")
+      // Contract: returns null only when the browser blocked the popup.
+      open: (url) => {
+        const w = window.open(url, "_blank");
+        if (w) w.opener = null;
+        return w;
+      }
     };
     setInterval(() => enhance(document, site, deps), 1e3);
   }
