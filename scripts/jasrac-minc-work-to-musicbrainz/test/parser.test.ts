@@ -1,6 +1,6 @@
 import { JSDOM } from "jsdom";
-import { parseJwid } from "../src/parser";
-import { emptyDocument, jwidDocument } from "./helpers";
+import { parseJwid, parseMinc } from "../src/parser";
+import { emptyDocument, jwidDocument, mincDocument } from "./helpers";
 
 describe("parseJwid", () => {
   it("parses a vocal work with lyricists, composers, a publisher, titles, and an artist", () => {
@@ -103,5 +103,73 @@ describe("parseJwid", () => {
     expect(info.sourceUrl).toBe("https://www2.jasrac.or.jp/eJwid/main?trxID=F20101");
     expect(info.credits).toEqual([]);
     expect(info.titles).toEqual([]);
+  });
+});
+
+describe("parseMinc", () => {
+  it("parses the JASRAC area and ignores an empty NexTone area", () => {
+    const info = parseMinc(mincDocument("minc-70342415"))!;
+    expect(info.site).toBe("minc");
+    expect(info.sourceUrl).toBe("https://www.minc.or.jp/saku/detail/?jcd=70342415&ncd=");
+    expect(info.title).toBe("ＹＯＵＴＨＦＵＬ");
+    expect(info.jasracCode).toBe("703-4241-5");
+    expect(info.nextoneCode).toBeNull();
+    expect(info.iswc).toBe("T-102.054.195-9");
+    expect(info.domestic).toBeNull();
+    expect(info.titles).toEqual([
+      { kind: "正題", title: "ＹＯＵＴＨＦＵＬ", kana: null, romaji: null, searchName: false },
+      { kind: "副題", title: "オープニング／ちはやふる（ＮＴＶ系アニメ）", kana: null, romaji: null, searchName: false },
+    ]);
+    expect(info.artists).toEqual(["９９ Ｒａｄｉｏ Ｓｅｒｖｉｃｅ"]);
+    expect(info.credits).toEqual([
+      { source: "JASRAC", name: "堀内 孝太", role: "作詞", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "堀内 孝平", role: "作詞", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "堀内 孝太", role: "作曲", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "堀内 孝平", role: "作曲", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "日本テレビ音楽 株式会社", role: "出版者", trust: "JASRAC", society: null, note: null },
+    ]);
+  });
+
+  it("parses both areas and pairs NexTone names with roles", () => {
+    const info = parseMinc(mincDocument("minc-25707965-N00913658"))!;
+    expect(info.sourceUrl).toBe("https://www.minc.or.jp/saku/detail/?jcd=25707965&ncd=N00913658");
+    expect(info.title).toBe("ダーリンダンス");
+    expect(info.jasracCode).toBe("257-0796-5");
+    expect(info.nextoneCode).toBe("N00913658");
+    expect(info.iswc).toBe("T-302.445.339-8");
+    expect(info.titles).toEqual([{ kind: "正題", title: "ダーリンダンス", kana: null, romaji: null, searchName: false }]);
+    expect(info.artists).toEqual(["神田 沙也加", "Ｋｏｔｏｎｅ", "ＭｏｎｓｔｅｒＺ ＭＡＴＥ"]);
+    expect(info.credits).toEqual([
+      { source: "JASRAC", name: "かいりきベア", role: "作詞", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "かいりきベア", role: "作曲", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "ドワンゴ 第７事業部", role: "出版者", trust: "部分信託", society: null, note: null },
+      { source: "NexTone", name: "かいりきベア", role: "作詞", trust: null, society: null, note: null },
+      { source: "NexTone", name: "株式会社 ドワンゴ 第七事業部", role: "出版社", trust: null, society: null, note: null },
+      { source: "NexTone", name: "かいりきベア", role: "作曲", trust: null, society: null, note: null },
+      { source: "NexTone", name: "株式会社 ドワンゴ 第七事業部", role: "出版社", trust: null, society: null, note: null },
+    ]);
+  });
+
+  it("gives extra NexTone names the role 不明 and drops extra roles", () => {
+    const doc = mincDocument("minc-25707965-N00913658");
+    const tables = doc.querySelectorAll("#nextone-area table");
+    tables[1].querySelectorAll("td")[0].innerHTML = "A / B / C";
+    tables[1].querySelectorAll("td")[1].textContent = "作詞 / 出版社";
+    tables[2].querySelectorAll("td")[0].innerHTML = "D";
+    tables[2].querySelectorAll("td")[1].textContent = "作曲 / 出版社 / 編曲";
+    const info = parseMinc(doc)!;
+    expect(info.credits.filter((c) => c.source === "NexTone").map((c) => [c.name, c.role])).toEqual([
+      ["A", "作詞"],
+      ["B", "出版社"],
+      ["C", "不明"],
+      ["D", "作曲"],
+    ]);
+  });
+
+  it("returns null without the JASRAC header table", () => {
+    expect(parseMinc(emptyDocument("https://www.minc.or.jp/saku/detail/?jcd=1"))).toBeNull();
+    const doc = mincDocument("minc-70342415");
+    doc.querySelector("#jasrac-area table")!.remove();
+    expect(parseMinc(doc)).toBeNull();
   });
 });
