@@ -253,7 +253,12 @@ export function enhancePage(doc: Document, info: WorkInfo, deps: UiDeps): HTMLEl
     );
   };
 
-  search.addEventListener("click", () => runSearch("title"));
+  search.addEventListener("click", () => {
+    if (state.searching) return;
+    ref.value = "";
+    setTarget(null);
+    runSearch("title");
+  });
 
   const openUrl = (build: (note: string) => string) => {
     notice.textContent = "";

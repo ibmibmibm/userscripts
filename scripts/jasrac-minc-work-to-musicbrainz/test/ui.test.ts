@@ -126,6 +126,19 @@ describe("enhancePage", () => {
     expect(q(panel, "picker").textContent).toContain("Lemon (2)");
   });
 
+  it("clears a selected target when a title search starts", async () => {
+    const doc = jwidDocument("jwid-70342415");
+    const { d } = deps({ searchByIswc: async () => [lemonHit()], searchByTitle: async () => [lemonHit()] });
+    const panel = enhancePage(doc, parseJwid(doc)!, d);
+    await settle();
+    expect(q<HTMLButtonElement>(panel, "update").disabled).toBe(false);
+    q<HTMLButtonElement>(panel, "search").click();
+    await settle();
+    expect(q<HTMLButtonElement>(panel, "update").disabled).toBe(true);
+    const radio = q(panel, "picker").querySelector<HTMLInputElement>("input[type=radio]")!;
+    expect(radio.checked).toBe(false);
+  });
+
   it("accepts a pasted work URL, rejects other text, and clears the picker selection", async () => {
     const doc = jwidDocument("jwid-70342415");
     const looked: string[] = [];
