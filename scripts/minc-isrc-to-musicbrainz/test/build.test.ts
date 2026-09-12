@@ -1,0 +1,19 @@
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+
+describe("build", () => {
+  it("writes one user.js file with the header and version", () => {
+    execFileSync("node", ["build.mjs", "minc-isrc-to-musicbrainz"], { stdio: "pipe" });
+    const out = readFileSync("dist/minc-isrc-to-musicbrainz.user.js", "utf8");
+    const header = readFileSync("scripts/minc-isrc-to-musicbrainz/header.txt", "utf8");
+    expect(out.startsWith(header.trimEnd() + "\n")).toBe(true);
+    expect(out).toContain("// @version      1.0.0");
+    expect(out).toContain("@namespace    https://github.com/ibmibmibm/userscripts");
+    expect(out).toContain("@downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/minc-isrc-to-musicbrainz.user.js");
+    expect(out).toContain("@match        https://www.minc.or.jp/product/list*");
+    expect(out).toContain("@match        https://www.minc.or.jp/music/list*");
+    expect(out).toContain("@grant        none");
+    expect(out).toContain('"1.0.0"');
+    expect(out).not.toContain("__VERSION__");
+  });
+});
