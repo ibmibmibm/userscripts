@@ -27,3 +27,6 @@ Run `npm test` and `node build.mjs minc-isrc-to-musicbrainz` from the repository
 `test/fixtures/` are captured from real MINC modals (MINC needs a login, so they cannot be re-downloaded).
 `test/fixtures/raw/*.txt` holds the captured data and `node scripts/minc-isrc-to-musicbrainz/test/fixtures/generate.mjs`
 rebuilds the HTML fixtures from it. Bump `@version` in `header.txt` before a release.
+
+The `.detail_data` parser depends on minc's label order (品番, 発売日, POS, セット数, 収録曲数); an empty
+catalog number or barcode after a minc redesign points there.

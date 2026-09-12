@@ -212,18 +212,25 @@ a mapping table with one row per minc disc:
 | checkbox | `Disc 1 CD, 14 tracks` | select of MB media, prefilled |
 
 - Include is checked by default for `audio` discs and unchecked for
-  `video` discs. Discs with no ISRC show "skipped" and no checkbox.
+  `video` discs. Discs with no ISRC are not listed in the table; the
+  note below the table names their tracks.
 - The select is prefilled with the MB medium at the same position. When
   the MB release has fewer media, the select is prefilled with the last
   medium and marked.
-- A red mark and a tooltip appear when the MB medium track count differs
-  from the minc disc track count, or when the kinds differ (MB format
-  containing `DVD`, `Blu-ray`, `VHS`, or `Video` counts as video).
+- A warning line below the table names the disc and medium when the MB
+  medium track count differs from the minc disc track count, or when
+  the kinds differ (MB format containing `DVD`, `Blu-ray`, `VHS`, or
+  `Video` counts as video).
 - Without an MBID there is no select; the minc disc position is used
   as the medium index.
+- A disc whose position exceeds the number of MusicBrainz media is
+  unchecked by default and mapped to the last medium; two included
+  discs on the same medium produce a warning and the "Open MagicISRC"
+  button refuses to build the URL.
 
 Warnings from `analyze` and the mapping marks are shown below the
-table. None of them block the "Open MagicISRC" button.
+table. Only a medium collision between two included discs blocks the
+"Open MagicISRC" button; the rest are informational.
 
 ## MagicISRC URL
 
