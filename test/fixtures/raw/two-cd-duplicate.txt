@@ -1,0 +1,42 @@
+T|Mr.Children 2011-2015
+H|col-sm-3|品番：TFCC-86854/5
+H|col-sm-3|発売日：2022/05/11
+H|col-sm-3|税抜価格：\3,273
+H|col-sm-3|ジャンル：ポップス歌謡曲
+H|col-sm-3|POS：4988061868547
+H|col-sm-3|セット数：2
+H|col-sm-3|収録曲数：27
+H|col-sm-3|総収録時間：2'31'39"
+H|col-sm-9|発売会社：（株）トイズファクトリー / 販売会社：（株）ソニー・ミュージックソリューションズ ※集中管理： 委任者 非委任者
+H|col-sm-3|用語の説明
+D|1|col-sm-2=[Disc1] 形態：ＣＤ１２cm{br}カタログ番号：TFCC 86854|col-sm-2=収録曲数：14{br}収録時間：1'14'15"|col-sm-8=
+C|
+R|1|0|hypnosis|V|5'59"|Mr.Children|JPTF02202401|705-3414-4|N00039880|管理情報
+R|2|0|REM|V|4'31"|Mr.Children|JPTF02202402|192-4533-5|N00047423|管理情報
+R|3|0|Marshmallow day|V|4'17"|Mr.Children|JPTF02202403|705-6508-2|N00039767|管理情報
+R|4|0|祈り ～涙の軌道|V|5'44"|Mr.Children|JPTF02202404|184-1041-3|N00037369|管理情報
+R|5|0|End of the day|V|5'50"|Mr.Children|JPTF02202404|184-3384-7|N00037360|管理情報
+R|6|0|pieces|V|6'35"|Mr.Children|JPTF02202406|184-3414-2|N00037364|管理情報
+R|7|0|常套句|V|4'07"|Mr.Children|JPTF02202407|189-5370-1|N00040313|管理情報
+R|8|0|Melody|V|5'03"|Mr.Children|JPTF02202408|205-4112-1|N00054570|管理情報
+R|9|0|足音 ～Be Strong|V|5'01"|Mr.Children|JPTF02202409|710-9734-1|N00054735|管理情報
+R|10|0|忘れ得ぬ人|V|5'19"|Mr.Children|JPTF02202410|712-5858-2|N00056120|管理情報
+R|11|0|放たれる|V|5'35"|Mr.Children|JPTF02202411|709-6106-9|N00051740|管理情報
+R|12|0|幻聴|V|5'33"|Mr.Children|JPTF02202412|207-7012-0|N00055545|管理情報
+R|13|0|進化論|V|5'44"|Mr.Children|JPTF02202413|207-7014-6|N00055544|管理情報
+R|14|0|未完|V|4'51"|Mr.Children|JPTF02202414|208-2473-4|N00055546|管理情報
+D|2|col-sm-2=[Disc2] 形態：ＣＤ１２cm{br}カタログ番号：TFCC 86855|col-sm-2=収録曲数：13{br}収録時間：1'17'24"|col-sm-8=Discタイトル：Mr.Children 30th giving 1{br} Discアーティスト：Mr.Children
+C|
+R|1|0|innocent world 『【es】 Mr.Children in FILM ／ 1995 Tour Atomic Heart』|V|7'22"|Mr.Children|JPTF02202501|025-7383-1|-|管理情報
+R|2|0|Dance Dance Dance 『【es】 Mr.Children in FILM ／ 1995 Tour Atomic Heart』|V|5'44"|Mr.Children|JPTF02202502|026-7239-1|-|管理情報
+R|3|0|抱きしめたい 『regress or progress '96-'97 IN TOKYO DOME』|V|5'55"|Mr.Children|JPTF02202503|012-6173-8|-|管理情報
+R|4|0|CROSS ROAD 『Mr.Children "HOME" TOUR 2007 ～in the field～』|V|5'10"|Mr.Children|JPTF02202504|022-0943-8|-|管理情報
+R|5|0|Tomorrow never knows 『Mr.Children Tour 2018-19 重力と呼吸 in TAIPEI』|V|5'21"|Mr.Children|JPTF02202505|027-8997-3|-|管理情報
+R|6|0|シーソーゲーム ～勇敢な恋の歌～ 『ap bank fes '12 Fund for Japan』|V|5'32"|Mr.Children|JPTF02202506|033-9023-3|N00003988|管理情報
+R|7|0|名もなき詩 『regress or progress '96-'97 IN TOKYO DOME』|V|5'26"|Mr.Children|JPTF02202507|037-9202-1|-|管理情報
+R|8|0|ニシエヒガシエ 『Mr.Children Stadium Tour 2015 未完』|V|5'44"|Mr.Children|JPTF02202508|056-6119-6|N00012466|管理情報
+R|9|0|光の射す方へ 『Mr.Children Stadium Tour 2015 未完』|V|7'00"|Mr.Children|JPTF02202509|062-7530-3|N00012502|管理情報
+R|10|0|つよがり 『Mr.Children Tour 2009 ～終末のコンフィデンスソングス～』|V|5'15"|Mr.Children|JPTF02202510|078-9869-0|N00012511|管理情報
+R|11|0|口笛 (LIVE FILM 『Mr.Children REFLECTION』)|V|6'00"|Mr.Children|JPTF02202511|071-4131-9|N00005270|管理情報
+R|12|0|NOT FOUND 『Mr.Children Tour 2018-19 重力と呼吸』|V|5'25"|Mr.Children|JPTF02202512|078-1742-8|N00012507|管理情報
+R|13|0|終わりなき旅 『Mr.Children STADIUM TOUR 2011 SENSE -in the field-』|V|7'26"|Mr.Children|JPTF02202513|061-3189-1|N00011941|管理情報
