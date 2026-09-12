@@ -1,0 +1,18 @@
+// ==UserScript==
+// @name         JASRAC / MINC work to MusicBrainz
+// @namespace    https://github.com/ibmibmibm/userscripts
+// @version      1.0.0
+// @description  Create or update a MusicBrainz work from a J-WID (JASRAC) or MINC (音楽権利情報検索ナビ) work detail page, with ISWC, codes, credits, and edit note prefilled
+// @author       Shen-Ta Hsieh
+// @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/jasrac-minc-work-to-musicbrainz.user.js
+// @updateURL    https://github.com/ibmibmibm/userscripts/raw/main/dist/jasrac-minc-work-to-musicbrainz.user.js
+// @match        https://www2.jasrac.or.jp/eJwid/main?trxID=F20101*
+// @match        https://www.minc.or.jp/saku/detail/*
+// @grant        none
+// @run-at       document-end
+// ==/UserScript==
+"use strict";
+(() => {
+  // scripts/jasrac-minc-work-to-musicbrainz/src/main.ts
+  var VERSION = true ? "1.0.0" : "dev";
+})();
