@@ -81,6 +81,10 @@ The page is server-rendered. Relevant DOM:
   No., 著作者/出版者, 識別, 契約, 所属団体, 特記. Names use a full-width
   space between surname and given name (`堀内　孝太`) and between company
   name and marker (`日本テレビ音楽　株式会社`).
+- Titles and names on J-WID separate words with full-width spaces
+  (U+3000), and a moved article is separated by two of them
+  (`ＡＬＭＩＧＨＴＹ　　ＴＨＥ`). JavaScript `\s` matches U+3000, so parsers
+  must not collapse whitespace; they only `trim()`.
 - The title table: the `table.detail.auto` whose header row contains
   `作品タイトル`. Each data row: `td.center` with 区分 (`正題`, `副題1`,
   `副題2`, …) and a `td` whose content is three lines separated by `<br>`:
@@ -204,8 +208,10 @@ Parsing rules:
   token at the start or end.
 - `stripCompany(name)`: fold, remove a leading or trailing marker and
   the space next to it, trim.
-- `isCjkOnly(s)`: every non-space character is in the CJK ranges or is
-  `・`, `ー`, `々`, or a full-width punctuation character.
+- `isCjkOnly(s)`: applied to a folded string; every non-space character
+  is in the CJK ranges (Hiragana, Katakana including `・` and `ー`, CJK
+  Unified Ideographs, CJK Symbols and Punctuation including `々`) or is
+  an ASCII digit, so `ドワンゴ 第7事業部` counts as CJK.
 - `targetName(name)`: `stripCompany(name)`, then remove all spaces when
   `isCjkOnly`. Examples: `堀内　孝太` → `堀内孝太`; `日本テレビ音楽　株式会社`
   → `日本テレビ音楽`; `株式会社 ドワンゴ 第七事業部` → `ドワンゴ第七事業部`;
