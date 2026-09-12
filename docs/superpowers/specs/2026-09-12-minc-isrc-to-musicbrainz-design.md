@@ -18,21 +18,31 @@ every ISRC prefilled so the user can submit them to MusicBrainz.
 
 ## Delivery
 
-- Source in TypeScript under `src/`.
-- esbuild bundles `src/main.ts` into one file,
-  `dist/minc-isrc-to-musicbrainz.user.js`, and prepends the userscript
-  header from `src/header.txt`.
-- The shipped artifact is that single `.user.js` file.
-- Tests run with vitest and jsdom. `package.json` exists only for the
-  build and the tests.
+- The repository is named `userscripts` and holds one folder per
+  script under `scripts/<name>/`. This script is
+  `scripts/minc-isrc-to-musicbrainz/`.
+- One shared toolchain at the repository root: `package.json`,
+  `tsconfig.json`, `vitest.config.ts`, and `build.mjs`.
+- Each script folder holds `header.txt`, `src/`, and `test/`.
+- `build.mjs` bundles every `scripts/*/src/main.ts` with esbuild into
+  `dist/<name>.user.js` and prepends that script's `header.txt`. The
+  `@version` value in `header.txt` is the script version and is also
+  injected into the bundle as `__VERSION__`.
+- The shipped artifact is the single `dist/<name>.user.js` file.
+- `dist/` is committed. A GitHub Actions workflow runs typecheck, tests,
+  and build on every push and pull request, and on pushes to `main` it
+  commits a changed `dist/` back with a `[skip ci]` message.
+- Tests run with vitest and jsdom.
 
 ## Userscript header
 
 ```
 // @name         MINC ISRC to MusicBrainz
-// @namespace    https://github.com/ibmibmibm/minc-userscript
+// @namespace    https://github.com/ibmibmibm/userscripts
 // @version      1.0.0
 // @description  Submit ISRCs from MINC (音楽権利情報検索ナビ) CD product details to MusicBrainz through MagicISRC
+// @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/minc-isrc-to-musicbrainz.user.js
+// @updateURL    https://github.com/ibmibmibm/userscripts/raw/main/dist/minc-isrc-to-musicbrainz.user.js
 // @match        https://www.minc.or.jp/product/list*
 // @match        https://www.minc.or.jp/music/list*
 // @grant        none
@@ -278,7 +288,7 @@ All errors go to the status line. No `alert`.
 
 ## Testing
 
-Fixtures under `test/fixtures/` are saved modal bodies:
+Fixtures under `scripts/minc-isrc-to-musicbrainz/test/fixtures/` are saved modal bodies:
 
 - `single-cd.html` (VPCC-82301: 1 CD, 3 tracks)
 - `two-cd-dvd-duplicate.html` (TFCC-86851/3: 2 CD + DVD, duplicate ISRC on disc 1 tracks 4 and 5, DVD has `-`)
@@ -286,8 +296,8 @@ Fixtures under `test/fixtures/` are saved modal bodies:
 - `thirteen-discs.html` (KIZC-101/13: 12 CD + DVD)
 - `music-list-empty-pos.html` (/music/list modal, POS empty, all ISRC `-`)
 
-Canned MusicBrainz search JSON under `test/fixtures/mb/` for one hit,
-several hits, and zero hits.
+Canned MusicBrainz search JSON under `test/fixtures/mb/` in the same
+folder for one hit, several hits, and zero hits.
 
 Unit tests (vitest + jsdom) cover:
 
@@ -307,18 +317,23 @@ Chrome on the five example products.
 ## File layout
 
 ```
-dist/minc-isrc-to-musicbrainz.user.js   built output (committed)
-src/header.txt                          userscript header
-src/main.ts                             page glue
-src/parser.ts
-src/analyze.ts
-src/musicbrainz.ts
-src/mapping.ts
-src/magicisrc.ts
-src/ui.ts
-test/*.test.ts
-test/fixtures/*.html, test/fixtures/mb/*.json
-build.mjs                               esbuild script
-package.json, tsconfig.json
-README.md
+.github/workflows/build.yml               typecheck, test, build, commit dist on main
+build.mjs                                 builds every scripts/*/src/main.ts
+package.json, tsconfig.json, vitest.config.ts
+README.md                                 repository overview and per-script links
+dist/minc-isrc-to-musicbrainz.user.js     built output (committed)
+scripts/minc-isrc-to-musicbrainz/
+  README.md                               install and use
+  header.txt                              userscript header
+  src/main.ts                             page glue
+  src/types.ts
+  src/parser.ts
+  src/analyze.ts
+  src/musicbrainz.ts
+  src/mapping.ts
+  src/magicisrc.ts
+  src/ui.ts
+  test/helpers.ts
+  test/*.test.ts
+  test/fixtures/*.html, test/fixtures/raw/*.txt, test/fixtures/mb/*.json
 ```

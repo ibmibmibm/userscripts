@@ -4,7 +4,7 @@
 
 **Goal:** A userscript that adds a button to the CD detail modal on minc.or.jp, reads all ISRCs, finds the MusicBrainz release by barcode, and opens MagicISRC with every ISRC prefilled.
 
-**Architecture:** TypeScript modules under `src/` with pure functions for parsing, analysis, MusicBrainz lookup, medium mapping, and URL building, plus one DOM glue module. esbuild bundles everything into one `dist/minc-isrc-to-musicbrainz.user.js` with the userscript header prepended. vitest with jsdom tests the pure modules against saved fixtures.
+**Architecture:** TypeScript modules under `scripts/minc-isrc-to-musicbrainz/src/` with pure functions for parsing, analysis, MusicBrainz lookup, medium mapping, and URL building, plus one DOM glue module. A shared root `build.mjs` bundles every `scripts/*/src/main.ts` into `dist/<name>.user.js` with that script's header prepended, so more userscripts can join the `userscripts` repository later. vitest with jsdom tests the pure modules against saved fixtures.
 
 **Tech Stack:** TypeScript 5, esbuild, vitest, jsdom, Node 20 or newer. No runtime dependencies.
 
@@ -14,13 +14,14 @@
 
 - The shipped artifact is one file: `dist/minc-isrc-to-musicbrainz.user.js`, committed to git.
 - Userscript header: `@grant none`, `@run-at document-end`, `@match https://www.minc.or.jp/product/list*` and `@match https://www.minc.or.jp/music/list*`.
-- `@namespace https://github.com/ibmibmibm/minc-userscript`, `@version 1.0.0`.
+- `@namespace https://github.com/ibmibmibm/userscripts`, `@version 1.0.0`, `@downloadURL` and `@updateURL` both `https://github.com/ibmibmibm/userscripts/raw/main/dist/minc-isrc-to-musicbrainz.user.js`.
+- Repository layout: shared toolchain at the root, one folder per script under `scripts/<name>/` with `header.txt`, `src/`, `test/`. This script is `scripts/minc-isrc-to-musicbrainz/`. All `npm` commands run at the repository root.
 - No `alert`, `confirm`, or `prompt`. All messages go to the status line.
 - ISRC pattern: `/^[A-Z]{2}[A-Z0-9]{3}\d{7}$/` after trim and upper-case.
 - MusicBrainz endpoint: `https://musicbrainz.org/ws/2/release/?fmt=json&limit=25&query=<q>`.
 - MagicISRC base: `https://magicisrc.kepstin.ca/`, parameter order `musicbrainzid`, `isrc<M>-<T>`..., `edit-note`.
 - Marker class on enhanced modal bodies: `minc-isrc-mb`. UI wrapper class: `minc-isrc-mb-ui`.
-- Fixture data already exists in `test/fixtures/raw/*.txt`, `test/fixtures/single-cd.html`, and `test/fixtures/mb/*.json`. Do not re-download; minc needs a login.
+- Fixture data already exists in `scripts/minc-isrc-to-musicbrainz/test/fixtures/raw/*.txt`, `.../test/fixtures/single-cd.html`, and `.../test/fixtures/mb/*.json`. Do not re-download; minc needs a login.
 - Commit after every task. Commit messages end with the two attribution lines given in the session reminder.
 
 ---
@@ -29,31 +30,36 @@
 
 | Path | Responsibility |
 |---|---|
-| `package.json`, `tsconfig.json`, `vitest.config.ts`, `.gitignore` | Tooling |
-| `build.mjs` | esbuild bundle plus header prepend |
-| `src/header.txt` | Userscript header block |
-| `src/types.ts` | Shared interfaces |
-| `src/parser.ts` | `parseProductModal`: modal DOM to `MincRelease` |
-| `src/analyze.ts` | `analyze`: duplicates, missing ISRCs, submittable discs |
-| `src/musicbrainz.ts` | `buildQueries`, `toReleaseHit`, `searchReleases` |
-| `src/mapping.ts` | `isVideoFormat`, `defaultMapping`, `mappingMarks` |
-| `src/magicisrc.ts` | `buildEditNote`, `buildMagicIsrcUrl` |
-| `src/ui.ts` | Builds the UI block and drives the click flow |
-| `src/main.ts` | Poll loop, calls `enhanceOpenModals` |
-| `test/fixtures/generate.mjs` | Turns `raw/*.txt` into `*.html` fixtures |
-| `test/fixtures/*.html`, `test/fixtures/mb/*.json` | Fixtures |
-| `test/*.test.ts` | Unit tests |
-| `README.md` | Install and use |
+| `package.json`, `tsconfig.json`, `vitest.config.ts`, `.gitignore` | Shared tooling at the repository root |
+| `build.mjs` | Builds every `scripts/*/src/main.ts` into `dist/<name>.user.js` with its header |
+| `.github/workflows/build.yml` | CI: typecheck, test, build; commits `dist/` on `main` |
+| `README.md` | Repository overview with a link per script |
+| `scripts/minc-isrc-to-musicbrainz/header.txt` | Userscript header block |
+| `scripts/minc-isrc-to-musicbrainz/README.md` | Install and use |
+| `scripts/minc-isrc-to-musicbrainz/src/types.ts` | Shared interfaces |
+| `scripts/minc-isrc-to-musicbrainz/src/parser.ts` | `parseProductModal`: modal DOM to `MincRelease` |
+| `scripts/minc-isrc-to-musicbrainz/src/analyze.ts` | `analyze`: duplicates, missing ISRCs, submittable discs |
+| `scripts/minc-isrc-to-musicbrainz/src/musicbrainz.ts` | `buildQueries`, `toReleaseHit`, `searchReleases` |
+| `scripts/minc-isrc-to-musicbrainz/src/mapping.ts` | `isVideoFormat`, `defaultMapping`, `mappingMarks` |
+| `scripts/minc-isrc-to-musicbrainz/src/magicisrc.ts` | `buildEditNote`, `buildMagicIsrcUrl` |
+| `scripts/minc-isrc-to-musicbrainz/src/ui.ts` | Builds the UI block and drives the click flow |
+| `scripts/minc-isrc-to-musicbrainz/src/main.ts` | Poll loop, calls `enhanceOpenModals` |
+| `scripts/minc-isrc-to-musicbrainz/test/helpers.ts` | Fixture loading helpers |
+| `scripts/minc-isrc-to-musicbrainz/test/fixtures/generate.mjs` | Turns `raw/*.txt` into `*.html` fixtures |
+| `scripts/minc-isrc-to-musicbrainz/test/fixtures/**` | Fixtures |
+| `scripts/minc-isrc-to-musicbrainz/test/*.test.ts` | Unit tests |
+
+In the task text below, `S/` is short for `scripts/minc-isrc-to-musicbrainz/`. Relative imports inside tests stay `../src/<module>` because `src/` and `test/` are siblings inside the script folder.
 
 ---
 
 ### Task 1: Project scaffold and build
 
 **Files:**
-- Create: `package.json`, `tsconfig.json`, `.gitignore`, `build.mjs`, `src/header.txt`, `src/main.ts`, `test/build.test.ts`
+- Create: `package.json`, `tsconfig.json`, `vitest.config.ts`, `.gitignore`, `build.mjs`, `S/header.txt`, `S/src/main.ts`, `S/test/build.test.ts`
 
 **Interfaces:**
-- Produces: `npm run build` writes `dist/minc-isrc-to-musicbrainz.user.js`; `npm test` runs vitest.
+- Produces: `npm run build` writes `dist/<name>.user.js` for every script folder; `npm test` runs vitest; `__VERSION__` inside a bundle is that script's `@version`.
 
 - [ ] **Step 1: Write package.json**
 
@@ -91,7 +97,7 @@
     "noEmit": true,
     "types": ["vitest/globals"]
   },
-  "include": ["src", "test"]
+  "include": ["scripts/*/src", "scripts/*/test"]
 }
 ```
 
@@ -106,7 +112,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["test/**/*.test.ts"],
+    include: ["scripts/*/test/**/*.test.ts"],
   },
 });
 ```
@@ -117,15 +123,17 @@ export default defineConfig({
 node_modules/
 ```
 
-- [ ] **Step 4: Write src/header.txt**
+- [ ] **Step 4: Write S/header.txt**
 
 ```
 // ==UserScript==
 // @name         MINC ISRC to MusicBrainz
-// @namespace    https://github.com/ibmibmibm/minc-userscript
-// @version      __VERSION__
+// @namespace    https://github.com/ibmibmibm/userscripts
+// @version      1.0.0
 // @description  Submit ISRCs from MINC (音楽権利情報検索ナビ) CD product details to MusicBrainz through MagicISRC
 // @author       Shen-Ta Hsieh
+// @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/minc-isrc-to-musicbrainz.user.js
+// @updateURL    https://github.com/ibmibmibm/userscripts/raw/main/dist/minc-isrc-to-musicbrainz.user.js
 // @match        https://www.minc.or.jp/product/list*
 // @match        https://www.minc.or.jp/music/list*
 // @grant        none
@@ -137,27 +145,46 @@ node_modules/
 
 ```js
 import { build } from "esbuild";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-const pkg = JSON.parse(readFileSync("package.json", "utf8"));
-const header = readFileSync("src/header.txt", "utf8").replace("__VERSION__", pkg.version);
+const SCRIPTS = "scripts";
+const only = process.argv[2]; // optional: build one script folder by name
 
-const result = await build({
-  entryPoints: ["src/main.ts"],
-  bundle: true,
-  format: "iife",
-  target: "es2020",
-  write: false,
-  charset: "utf8",
-  define: { __VERSION__: JSON.stringify(pkg.version) },
-});
+function versionFromHeader(header, name) {
+  const m = header.match(/^\/\/ @version\s+(\S+)/m);
+  if (!m) throw new Error(`${name}: header.txt has no @version line`);
+  return m[1];
+}
 
 mkdirSync("dist", { recursive: true });
-writeFileSync("dist/minc-isrc-to-musicbrainz.user.js", header + "\n" + result.outputFiles[0].text);
-console.log("built dist/minc-isrc-to-musicbrainz.user.js");
+const names = readdirSync(SCRIPTS).filter((n) => !only || n === only);
+let built = 0;
+for (const name of names) {
+  const dir = join(SCRIPTS, name);
+  const entry = join(dir, "src", "main.ts");
+  const headerPath = join(dir, "header.txt");
+  if (!existsSync(entry) || !existsSync(headerPath)) continue;
+  const header = readFileSync(headerPath, "utf8");
+  const version = versionFromHeader(header, name);
+  const result = await build({
+    entryPoints: [entry],
+    bundle: true,
+    format: "iife",
+    target: "es2020",
+    write: false,
+    charset: "utf8",
+    define: { __VERSION__: JSON.stringify(version) },
+  });
+  const out = join("dist", `${name}.user.js`);
+  writeFileSync(out, header.trimEnd() + "\n" + result.outputFiles[0].text);
+  console.log(`built ${out} (v${version})`);
+  built += 1;
+}
+if (built === 0) throw new Error("no script folder with header.txt and src/main.ts found");
 ```
 
-- [ ] **Step 6: Write a placeholder src/main.ts**
+- [ ] **Step 6: Write a placeholder S/src/main.ts**
 
 ```ts
 declare const __VERSION__: string;
@@ -167,7 +194,7 @@ console.debug("MINC ISRC to MusicBrainz", __VERSION__);
 
 - [ ] **Step 7: Write the failing build test**
 
-`test/build.test.ts`:
+`S/test/build.test.ts` (vitest runs with the repository root as the working directory):
 
 ```ts
 import { execFileSync } from "node:child_process";
@@ -175,14 +202,17 @@ import { readFileSync } from "node:fs";
 
 describe("build", () => {
   it("writes one user.js file with the header and version", () => {
-    execFileSync("node", ["build.mjs"], { stdio: "pipe" });
+    execFileSync("node", ["build.mjs", "minc-isrc-to-musicbrainz"], { stdio: "pipe" });
     const out = readFileSync("dist/minc-isrc-to-musicbrainz.user.js", "utf8");
-    const pkg = JSON.parse(readFileSync("package.json", "utf8"));
-    expect(out.startsWith("// ==UserScript==")).toBe(true);
-    expect(out).toContain(`// @version      ${pkg.version}`);
+    const header = readFileSync("scripts/minc-isrc-to-musicbrainz/header.txt", "utf8");
+    expect(out.startsWith(header.trimEnd() + "\n")).toBe(true);
+    expect(out).toContain("// @version      1.0.0");
+    expect(out).toContain("@namespace    https://github.com/ibmibmibm/userscripts");
+    expect(out).toContain("@downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/minc-isrc-to-musicbrainz.user.js");
     expect(out).toContain("@match        https://www.minc.or.jp/product/list*");
     expect(out).toContain("@match        https://www.minc.or.jp/music/list*");
     expect(out).toContain("@grant        none");
+    expect(out).toContain('"1.0.0"');
     expect(out).not.toContain("__VERSION__");
   });
 });
@@ -190,18 +220,18 @@ describe("build", () => {
 
 - [ ] **Step 8: Install and run the test to verify it fails**
 
-Run: `npm install` then `npx vitest run test/build.test.ts`
+Run: `npm install` then `npx vitest run scripts/minc-isrc-to-musicbrainz/test/build.test.ts`
 Expected: FAIL because `dist/` does not exist yet or `build.mjs` errors. If it passes on the first run, that is fine; the build is trivial.
 
 - [ ] **Step 9: Run build and tests**
 
 Run: `npm run build && npm test && npm run typecheck`
-Expected: build prints `built dist/minc-isrc-to-musicbrainz.user.js`, 1 test passes, typecheck has no errors.
+Expected: build prints `built dist/minc-isrc-to-musicbrainz.user.js (v1.0.0)`, 1 test passes, typecheck has no errors.
 
 - [ ] **Step 10: Commit**
 
 ```bash
-git add package.json package-lock.json tsconfig.json vitest.config.ts .gitignore build.mjs src/header.txt src/main.ts test/build.test.ts dist/minc-isrc-to-musicbrainz.user.js
+git add package.json package-lock.json tsconfig.json vitest.config.ts .gitignore build.mjs scripts/minc-isrc-to-musicbrainz dist/minc-isrc-to-musicbrainz.user.js
 git commit -m "Scaffold TypeScript userscript build and test setup"
 ```
 
@@ -210,9 +240,9 @@ git commit -m "Scaffold TypeScript userscript build and test setup"
 ### Task 2: Fixture generator
 
 **Files:**
-- Create: `test/fixtures/generate.mjs`, `test/fixtures.test.ts`
-- Generate: `test/fixtures/two-cd-dvd.html`, `test/fixtures/two-cd-duplicate.html`, `test/fixtures/cd-bluray.html`, `test/fixtures/thirteen-discs.html`, `test/fixtures/music-list-empty-pos.html`
-- Existing input: `test/fixtures/raw/*.txt`, `test/fixtures/single-cd.html` (verbatim capture, not generated)
+- Create: `S/test/helpers.ts`, `S/test/fixtures/generate.mjs`, `S/test/fixtures.test.ts`
+- Generate: `S/test/fixtures/two-cd-dvd.html`, `two-cd-duplicate.html`, `cd-bluray.html`, `thirteen-discs.html`, `music-list-empty-pos.html`
+- Existing input: `S/test/fixtures/raw/*.txt`, `S/test/fixtures/single-cd.html` (verbatim capture, not generated)
 
 **Interfaces:**
 - Produces: HTML fixtures whose structure matches the real minc modal (see spec "Modal structure").
@@ -228,7 +258,7 @@ The raw format, one record per line, fields separated by `|`:
 
 - [ ] **Step 1: Write the generator**
 
-`test/fixtures/generate.mjs`:
+`S/test/fixtures/generate.mjs`:
 
 ```js
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
@@ -331,21 +361,40 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
 - [ ] **Step 2: Write the fixture helper and the failing fixture test**
 
-`test/helpers.ts`:
+`S/test/helpers.ts` (paths resolve from this file, so the working directory does not matter):
 
 ```ts
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { JSDOM } from "jsdom";
+import type { MbReleaseHit } from "../src/types";
+
+export const FIXTURES = fileURLToPath(new URL("./fixtures/", import.meta.url));
+
+export function fixtureHtml(name: string): string {
+  return readFileSync(`${FIXTURES}${name}.html`, "utf8");
+}
 
 /** Loads a saved modal fixture and returns its `.modal-body`, wrapped in `.modal.in` like the real page. */
 export function loadFixture(name: string): Element {
-  const html = readFileSync(`test/fixtures/${name}.html`, "utf8");
-  const dom = new JSDOM(`<div class="modal in"><div class="modal-dialog large">${html}</div></div>`);
+  const dom = new JSDOM(`<div class="modal in"><div class="modal-dialog large">${fixtureHtml(name)}</div></div>`);
   return dom.window.document.querySelector(".modal-body")!;
+}
+
+/** Parsed MusicBrainz search JSON from test/fixtures/mb/<name>.json. */
+export function mbJson(name: string): { releases?: unknown[]; count?: number } {
+  return JSON.parse(readFileSync(`${FIXTURES}mb/${name}.json`, "utf8"));
+}
+
+/** Applies toReleaseHit to every release in a MusicBrainz fixture. */
+export function mbHits(name: string, toHit: (json: unknown) => MbReleaseHit): MbReleaseHit[] {
+  return (mbJson(name).releases ?? []).map(toHit);
 }
 ```
 
-`test/fixtures.test.ts`:
+Note: `src/types.ts` does not exist until Task 3. Until then, write `helpers.ts` without the `mbJson` and `mbHits` functions and the `MbReleaseHit` import; add them at the start of Task 5.
+
+`S/test/fixtures.test.ts`:
 
 ```ts
 import { loadFixture } from "./helpers";
@@ -377,23 +426,23 @@ describe("fixtures", () => {
 
 - [ ] **Step 3: Run the test to verify it fails**
 
-Run: `npx vitest run test/fixtures.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/fixtures.test.ts`
 Expected: FAIL, five fixtures missing (`ENOENT`).
 
 - [ ] **Step 4: Generate the fixtures**
 
-Run: `node test/fixtures/generate.mjs`
+Run: `node scripts/minc-isrc-to-musicbrainz/test/fixtures/generate.mjs`
 Expected: five `wrote ...html` lines.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
-Run: `npx vitest run test/fixtures.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/fixtures.test.ts`
 Expected: 6 tests pass.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add test/fixtures test/helpers.ts test/fixtures.test.ts
+git add scripts/minc-isrc-to-musicbrainz/test
 git commit -m "Add modal fixtures and generator"
 ```
 
@@ -402,12 +451,12 @@ git commit -m "Add modal fixtures and generator"
 ### Task 3: Types and parser
 
 **Files:**
-- Create: `src/types.ts`, `src/parser.ts`, `test/parser.test.ts`
+- Create: `S/src/types.ts`, `S/src/parser.ts`, `S/test/parser.test.ts`
 
 **Interfaces:**
-- Produces: `parseProductModal(modalBody: Element): MincRelease | null`, `isValidIsrc(s: string): boolean`, and the interfaces in `src/types.ts` used by every later task.
+- Produces: `parseProductModal(modalBody: Element): MincRelease | null`, `isValidIsrc(s: string): boolean`, and the interfaces in `S/src/types.ts` used by every later task.
 
-- [ ] **Step 1: Write src/types.ts**
+- [ ] **Step 1: Write S/src/types.ts**
 
 ```ts
 export interface MincTrack {
@@ -455,7 +504,7 @@ export interface MbReleaseHit {
 
 - [ ] **Step 2: Write the failing parser tests**
 
-`test/parser.test.ts`:
+`S/test/parser.test.ts`:
 
 ```ts
 import { loadFixture } from "./helpers";
@@ -544,10 +593,10 @@ describe("parseProductModal", () => {
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
-Run: `npx vitest run test/parser.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/parser.test.ts`
 Expected: FAIL, cannot resolve `../src/parser`.
 
-- [ ] **Step 4: Write src/parser.ts**
+- [ ] **Step 4: Write S/src/parser.ts**
 
 ```ts
 import type { DiscKind, MincDisc, MincRelease, MincTrack } from "./types";
@@ -643,7 +692,7 @@ Note: after NFKC normalization the full-width colon `：` becomes `:` in the dis
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `npx vitest run test/parser.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/parser.test.ts`
 Expected: 9 tests pass. If the `format` expectations differ (for example `"CD12cm"` versus `"CD 12cm"`), fix the parser, not the test: NFKC turns `ＣＤ１２cm` into `CD12cm` with no space, and `Ｂｌｕ－ｒａｙＤｉｓｃ Ｖｉｄｅｏ` into `Blu-rayDisc Video`.
 
 - [ ] **Step 6: Typecheck and commit**
@@ -651,7 +700,7 @@ Expected: 9 tests pass. If the `format` expectations differ (for example `"CD12c
 Run: `npm run typecheck`
 
 ```bash
-git add src/types.ts src/parser.ts test/parser.test.ts
+git add scripts/minc-isrc-to-musicbrainz/src/types.ts scripts/minc-isrc-to-musicbrainz/src/parser.ts scripts/minc-isrc-to-musicbrainz/test/parser.test.ts
 git commit -m "Parse the minc CD detail modal into a release model"
 ```
 
@@ -660,10 +709,10 @@ git commit -m "Parse the minc CD detail modal into a release model"
 ### Task 4: Analysis
 
 **Files:**
-- Create: `src/analyze.ts`, `test/analyze.test.ts`
+- Create: `S/src/analyze.ts`, `S/test/analyze.test.ts`
 
 **Interfaces:**
-- Consumes: `MincRelease` from `src/types.ts`.
+- Consumes: `MincRelease` from `S/src/types.ts`.
 - Produces: `analyze(release: MincRelease): Analysis` with
 
 ```ts
@@ -676,7 +725,7 @@ export interface Analysis {
 
 - [ ] **Step 1: Write the failing tests**
 
-`test/analyze.test.ts`:
+`S/test/analyze.test.ts`:
 
 ```ts
 import { loadFixture } from "./helpers";
@@ -713,10 +762,10 @@ describe("analyze", () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `npx vitest run test/analyze.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/analyze.test.ts`
 Expected: FAIL, cannot resolve `../src/analyze`.
 
-- [ ] **Step 3: Write src/analyze.ts**
+- [ ] **Step 3: Write S/src/analyze.ts**
 
 ```ts
 import type { MincRelease } from "./types";
@@ -757,13 +806,13 @@ export function analyze(release: MincRelease): Analysis {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `npx vitest run test/analyze.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/analyze.test.ts`
 Expected: 4 tests pass.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/analyze.ts test/analyze.test.ts
+git add scripts/minc-isrc-to-musicbrainz/src/analyze.ts scripts/minc-isrc-to-musicbrainz/test/analyze.test.ts
 git commit -m "Analyze parsed releases for duplicate and missing ISRCs"
 ```
 
@@ -772,11 +821,12 @@ git commit -m "Analyze parsed releases for duplicate and missing ISRCs"
 ### Task 5: MusicBrainz lookup
 
 **Files:**
-- Create: `src/musicbrainz.ts`, `test/musicbrainz.test.ts`
-- Existing: `test/fixtures/mb/*.json`
+- Create: `S/src/musicbrainz.ts`, `S/test/musicbrainz.test.ts`
+- Modify: `S/test/helpers.ts` (add `mbJson` and `mbHits` from the Task 2 listing now that `src/types.ts` exists)
+- Existing: `S/test/fixtures/mb/*.json`
 
 **Interfaces:**
-- Consumes: `MincRelease`, `MbReleaseHit`, `MbMedium` from `src/types.ts`.
+- Consumes: `MincRelease`, `MbReleaseHit`, `MbMedium` from `S/src/types.ts`.
 - Produces:
   - `buildQueries(release: MincRelease): string[]` (Lucene query strings in the order to try)
   - `catnoForQuery(catalogNumber: string): string`
@@ -788,15 +838,12 @@ Fixture facts: `barcode-none.json` holds five hits whose `barcode` is a run of z
 
 - [ ] **Step 1: Write the failing tests**
 
-`test/musicbrainz.test.ts`:
+`S/test/musicbrainz.test.ts`:
 
 ```ts
-import { readFileSync } from "node:fs";
-import { loadFixture } from "./helpers";
+import { loadFixture, mbJson as mb } from "./helpers";
 import { parseProductModal } from "../src/parser";
 import { buildQueries, catnoForQuery, toReleaseHit, searchReleases, mbSearchUrl } from "../src/musicbrainz";
-
-const mb = (name: string) => JSON.parse(readFileSync(`test/fixtures/mb/${name}.json`, "utf8"));
 
 function fakeFetch(responses: Record<string, unknown>, status = 200): typeof fetch {
   const calls: string[] = [];
@@ -832,7 +879,7 @@ describe("buildQueries", () => {
 
 describe("toReleaseHit", () => {
   it("maps a full search result", () => {
-    const hit = toReleaseHit(mb("barcode-two-cd-dvd").releases[0]);
+    const hit = toReleaseHit(mb("barcode-two-cd-dvd").releases![0]);
     expect(hit).toEqual({
       mbid: hit.mbid,
       title: "Mr.Children 2011–2015",
@@ -914,10 +961,10 @@ describe("mbSearchUrl", () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `npx vitest run test/musicbrainz.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/musicbrainz.test.ts`
 Expected: FAIL, cannot resolve `../src/musicbrainz`.
 
-- [ ] **Step 3: Write src/musicbrainz.ts**
+- [ ] **Step 3: Write S/src/musicbrainz.ts**
 
 ```ts
 import type { MbMedium, MbReleaseHit, MincRelease } from "./types";
@@ -998,13 +1045,13 @@ export function mbSearchUrl(catalogNumber: string): string {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `npx vitest run test/musicbrainz.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/musicbrainz.test.ts`
 Expected: 11 tests pass.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/musicbrainz.ts test/musicbrainz.test.ts
+git add scripts/minc-isrc-to-musicbrainz/src/musicbrainz.ts scripts/minc-isrc-to-musicbrainz/test/musicbrainz.test.ts
 git commit -m "Look up MusicBrainz releases by barcode with catalog number fallback"
 ```
 
@@ -1013,10 +1060,10 @@ git commit -m "Look up MusicBrainz releases by barcode with catalog number fallb
 ### Task 6: Medium mapping
 
 **Files:**
-- Create: `src/mapping.ts`, `test/mapping.test.ts`
+- Create: `S/src/mapping.ts`, `S/test/mapping.test.ts`
 
 **Interfaces:**
-- Consumes: `MincRelease`, `MbReleaseHit`, `MbMedium`, `DiscKind` from `src/types.ts`; `Analysis` from `src/analyze.ts`.
+- Consumes: `MincRelease`, `MbReleaseHit`, `MbMedium`, `DiscKind` from `S/src/types.ts`; `Analysis` from `S/src/analyze.ts`.
 - Produces:
 
 ```ts
@@ -1034,17 +1081,16 @@ export function mappingMarks(release: MincRelease, mapping: DiscMapping[], hit: 
 
 - [ ] **Step 1: Write the failing tests**
 
-`test/mapping.test.ts`:
+`S/test/mapping.test.ts`:
 
 ```ts
-import { readFileSync } from "node:fs";
-import { loadFixture } from "./helpers";
+import { loadFixture, mbHits } from "./helpers";
 import { parseProductModal } from "../src/parser";
 import { analyze } from "../src/analyze";
 import { toReleaseHit } from "../src/musicbrainz";
 import { defaultMapping, mappingMarks, isVideoFormat } from "../src/mapping";
 
-const hit = (name: string) => toReleaseHit(JSON.parse(readFileSync(`test/fixtures/mb/${name}.json`, "utf8")).releases[0]);
+const hit = (name: string) => mbHits(name, toReleaseHit)[0];
 
 describe("isVideoFormat", () => {
   it("detects video formats", () => {
@@ -1123,10 +1169,10 @@ describe("mappingMarks", () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `npx vitest run test/mapping.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/mapping.test.ts`
 Expected: FAIL, cannot resolve `../src/mapping`.
 
-- [ ] **Step 3: Write src/mapping.ts**
+- [ ] **Step 3: Write S/src/mapping.ts**
 
 ```ts
 import type { Analysis } from "./analyze";
@@ -1185,13 +1231,13 @@ export function mappingMarks(release: MincRelease, mapping: DiscMapping[], hit: 
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `npx vitest run test/mapping.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/mapping.test.ts`
 Expected: 9 tests pass.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/mapping.ts test/mapping.test.ts
+git add scripts/minc-isrc-to-musicbrainz/src/mapping.ts scripts/minc-isrc-to-musicbrainz/test/mapping.test.ts
 git commit -m "Map minc discs to MusicBrainz media with mismatch marks"
 ```
 
@@ -1200,10 +1246,10 @@ git commit -m "Map minc discs to MusicBrainz media with mismatch marks"
 ### Task 7: MagicISRC URL and edit note
 
 **Files:**
-- Create: `src/magicisrc.ts`, `test/magicisrc.test.ts`
+- Create: `S/src/magicisrc.ts`, `S/test/magicisrc.test.ts`
 
 **Interfaces:**
-- Consumes: `MincRelease` from `src/types.ts`; `DiscMapping` from `src/mapping.ts`.
+- Consumes: `MincRelease` from `S/src/types.ts`; `DiscMapping` from `S/src/mapping.ts`.
 - Produces:
 
 ```ts
@@ -1216,7 +1262,7 @@ export function mincProductUrl(catalogNumber: string): string;
 
 - [ ] **Step 1: Write the failing tests**
 
-`test/magicisrc.test.ts`:
+`S/test/magicisrc.test.ts`:
 
 ```ts
 import { loadFixture } from "./helpers";
@@ -1292,10 +1338,10 @@ describe("buildMagicIsrcUrl", () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `npx vitest run test/magicisrc.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/magicisrc.test.ts`
 Expected: FAIL, cannot resolve `../src/magicisrc`.
 
-- [ ] **Step 3: Write src/magicisrc.ts**
+- [ ] **Step 3: Write S/src/magicisrc.ts**
 
 ```ts
 import type { DiscMapping } from "./mapping";
@@ -1343,13 +1389,13 @@ export function buildMagicIsrcUrl(input: { mbid: string | null; editNote: string
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `npx vitest run test/magicisrc.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/magicisrc.test.ts`
 Expected: 7 tests pass.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/magicisrc.ts test/magicisrc.test.ts
+git add scripts/minc-isrc-to-musicbrainz/src/magicisrc.ts scripts/minc-isrc-to-musicbrainz/test/magicisrc.test.ts
 git commit -m "Build the MagicISRC URL and edit note"
 ```
 
@@ -1358,7 +1404,7 @@ git commit -m "Build the MagicISRC URL and edit note"
 ### Task 8: UI block and click flow
 
 **Files:**
-- Create: `src/ui.ts`, `test/ui.test.ts`
+- Create: `S/src/ui.ts`, `S/test/ui.test.ts`
 
 **Interfaces:**
 - Consumes: everything from Tasks 3 to 7.
@@ -1385,17 +1431,15 @@ Behavior:
 
 - [ ] **Step 1: Write the failing tests**
 
-`test/ui.test.ts`:
+`S/test/ui.test.ts`:
 
 ```ts
-import { readFileSync } from "node:fs";
-import { loadFixture } from "./helpers";
+import { loadFixture, mbHits } from "./helpers";
 import { toReleaseHit } from "../src/musicbrainz";
 import { enhanceModalBody, type UiDeps } from "../src/ui";
 import type { MbReleaseHit } from "../src/types";
 
-const hit = (name: string): MbReleaseHit =>
-  toReleaseHit(JSON.parse(readFileSync(`test/fixtures/mb/${name}.json`, "utf8")).releases[0]);
+const hit = (name: string): MbReleaseHit => mbHits(name, toReleaseHit)[0];
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
@@ -1456,7 +1500,7 @@ describe("enhanceModalBody", () => {
 
   it("shows a picker for several hits and honors the choice", async () => {
     const body = loadFixture("two-cd-duplicate");
-    const hits = JSON.parse(readFileSync("test/fixtures/mb/catno-multi.json", "utf8")).releases.map(toReleaseHit) as MbReleaseHit[];
+    const hits = mbHits("catno-multi", toReleaseHit);
     const { d, opened } = deps({ search: async () => hits });
     enhanceModalBody(body, d);
     body.querySelector<HTMLButtonElement>(".minc-isrc-mb-submit")!.click();
@@ -1525,10 +1569,10 @@ describe("enhanceModalBody", () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `npx vitest run test/ui.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/ui.test.ts`
 Expected: FAIL, cannot resolve `../src/ui`.
 
-- [ ] **Step 3: Write src/ui.ts**
+- [ ] **Step 3: Write S/src/ui.ts**
 
 ```ts
 import { analyze, type Analysis } from "./analyze";
@@ -1762,7 +1806,7 @@ export function enhanceModalBody(body: Element, deps: UiDeps): boolean {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `npx vitest run test/ui.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/ui.test.ts`
 Expected: 8 tests pass. If the failure test's error message check fails, make sure `searchReleases` in Task 5 throws `Error("MusicBrainz responded with HTTP 503")` and the test's fake throws `Error("HTTP 503")`; the UI must print the error's `message` verbatim inside the parentheses.
 
 - [ ] **Step 5: Typecheck and commit**
@@ -1770,7 +1814,7 @@ Expected: 8 tests pass. If the failure test's error message check fails, make su
 Run: `npm run typecheck && npm test`
 
 ```bash
-git add src/ui.ts test/ui.test.ts
+git add scripts/minc-isrc-to-musicbrainz/src/ui.ts scripts/minc-isrc-to-musicbrainz/test/ui.test.ts
 git commit -m "Add the modal UI block with picker, mapping table, and MagicISRC hand-off"
 ```
 
@@ -1779,26 +1823,26 @@ git commit -m "Add the modal UI block with picker, mapping table, and MagicISRC 
 ### Task 9: Page glue, build, README, and manual check
 
 **Files:**
-- Modify: `src/main.ts`
-- Create: `README.md`, `test/main.test.ts`
+- Modify: `S/src/main.ts`
+- Create: `README.md` (repository root), `S/README.md`, `S/test/main.test.ts`
 - Rebuild: `dist/minc-isrc-to-musicbrainz.user.js`
 
 **Interfaces:**
-- Consumes: `enhanceModalBody`, `UiDeps` from `src/ui.ts`; `searchReleases` from `src/musicbrainz.ts`.
+- Consumes: `enhanceModalBody`, `UiDeps` from `S/src/ui.ts`; `searchReleases` from `S/src/musicbrainz.ts`.
 - Produces: `enhanceOpenModals(doc: Document, deps: UiDeps): number` (count of bodies enhanced on this tick) and the running poll in `main.ts`.
 
 - [ ] **Step 1: Write the failing test**
 
-`test/main.test.ts`:
+`S/test/main.test.ts`:
 
 ```ts
-import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
+import { fixtureHtml } from "./helpers";
 import { enhanceOpenModals } from "../src/main";
 
 function page(...fixtures: { name: string; open: boolean }[]): Document {
   const html = fixtures
-    .map((f) => `<div class="modal${f.open ? " in" : ""}"><div class="modal-dialog large">${readFileSync(`test/fixtures/${f.name}.html`, "utf8")}</div></div>`)
+    .map((f) => `<div class="modal${f.open ? " in" : ""}"><div class="modal-dialog large">${fixtureHtml(f.name)}</div></div>`)
     .join("");
   return new JSDOM(`<body>${html}</body>`).window.document;
 }
@@ -1825,10 +1869,10 @@ describe("enhanceOpenModals", () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `npx vitest run test/main.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/main.test.ts`
 Expected: FAIL, `enhanceOpenModals` is not exported.
 
-- [ ] **Step 3: Write src/main.ts**
+- [ ] **Step 3: Write S/src/main.ts**
 
 ```ts
 import { searchReleases } from "./musicbrainz";
@@ -1864,12 +1908,37 @@ if (typeof window !== "undefined" && typeof document !== "undefined" && /minc\.o
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `npx vitest run test/main.test.ts`
+Run: `npx vitest run scripts/minc-isrc-to-musicbrainz/test/main.test.ts`
 Expected: 2 tests pass.
 
 Note on the `.detail_data` check in `enhanceOpenModals`: a body that lacks the table is skipped without being marked, so the poll retries it on the next tick while the AJAX content is still loading. `enhanceModalBody` marks and logs only when it is called with a body that has a table but fails to parse.
 
-- [ ] **Step 5: Write README.md**
+- [ ] **Step 5: Write the two README files**
+
+Root `README.md`:
+
+```markdown
+# userscripts
+
+Userscripts by Shen-Ta Hsieh. Each script lives in `scripts/<name>/` and is built into `dist/<name>.user.js`.
+
+| Script | Install | About |
+|---|---|---|
+| MINC ISRC to MusicBrainz | [dist/minc-isrc-to-musicbrainz.user.js](https://github.com/ibmibmibm/userscripts/raw/main/dist/minc-isrc-to-musicbrainz.user.js) | [scripts/minc-isrc-to-musicbrainz](scripts/minc-isrc-to-musicbrainz/README.md) |
+
+## Develop
+
+    npm install
+    npm run typecheck
+    npm test
+    npm run build            # every script
+    node build.mjs <name>    # one script
+
+`dist/` is committed. The GitHub Actions workflow rebuilds it on every push to `main` and commits the result.
+To add a script, create `scripts/<name>/header.txt` and `scripts/<name>/src/main.ts`; the build picks it up.
+```
+
+`S/README.md`:
 
 ```markdown
 # MINC ISRC to MusicBrainz
@@ -1882,7 +1951,8 @@ MagicISRC handles the MusicBrainz login, the preview, and the submit.
 ## Install
 
 1. Install a userscript manager such as Tampermonkey or Violentmonkey.
-2. Open `dist/minc-isrc-to-musicbrainz.user.js` from this repository in the browser and accept the install.
+2. Open https://github.com/ibmibmibm/userscripts/raw/main/dist/minc-isrc-to-musicbrainz.user.js and accept the install.
+   The script updates itself from that URL.
 
 ## Use
 
@@ -1896,14 +1966,10 @@ MagicISRC handles the MusicBrainz login, the preview, and the submit.
 
 ## Develop
 
-    npm install
-    npm test
-    npm run build
-
-The build writes `dist/minc-isrc-to-musicbrainz.user.js`. Commit that file with every release.
-
-Test fixtures under `test/fixtures/` are captured from real MINC modals. `test/fixtures/raw/*.txt` holds the
-captured data and `node test/fixtures/generate.mjs` rebuilds the HTML fixtures from it.
+Run `npm test` and `node build.mjs minc-isrc-to-musicbrainz` from the repository root. Test fixtures under
+`test/fixtures/` are captured from real MINC modals (MINC needs a login, so they cannot be re-downloaded).
+`test/fixtures/raw/*.txt` holds the captured data and `node scripts/minc-isrc-to-musicbrainz/test/fixtures/generate.mjs`
+rebuilds the HTML fixtures from it. Bump `@version` in `header.txt` before a release.
 ```
 
 - [ ] **Step 6: Build, run everything, commit**
@@ -1912,8 +1978,8 @@ Run: `npm run typecheck && npm test && npm run build`
 Expected: all tests pass, build writes the dist file.
 
 ```bash
-git add src/main.ts test/main.test.ts README.md dist/minc-isrc-to-musicbrainz.user.js
-git commit -m "Add the poll loop, README, and built userscript"
+git add scripts/minc-isrc-to-musicbrainz/src/main.ts scripts/minc-isrc-to-musicbrainz/test/main.test.ts README.md scripts/minc-isrc-to-musicbrainz/README.md dist/minc-isrc-to-musicbrainz.user.js
+git commit -m "Add the poll loop, READMEs, and built userscript"
 ```
 
 - [ ] **Step 7: Manual check in Chrome**
@@ -1932,8 +1998,83 @@ Record any difference from the expected behavior as a bug and fix it with a test
 
 ---
 
+### Task 10: GitHub Actions build workflow
+
+**Files:**
+- Create: `.github/workflows/build.yml`
+
+**Interfaces:**
+- Consumes: `npm run typecheck`, `npm test`, `npm run build` from Task 1.
+- Produces: CI on every push and pull request; on pushes to `main`, a commit of a changed `dist/` by `github-actions[bot]` with `[skip ci]` in the message so the workflow does not loop.
+
+- [ ] **Step 1: Write the workflow**
+
+`.github/workflows/build.yml`:
+
+```yaml
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      - name: Commit built userscripts
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist
+          if git diff --cached --quiet; then
+            echo "dist is up to date"
+            exit 0
+          fi
+          git commit -m "Build userscripts [skip ci]"
+          git push
+```
+
+- [ ] **Step 2: Check the file reads back**
+
+Run: `node -e "const y=require('fs').readFileSync('.github/workflows/build.yml','utf8'); if(!/npm run build/.test(y)||!/skip ci/.test(y)) process.exit(1)"`
+Expected: exit code 0. No YAML parser is installed locally; the real check is the first run on GitHub.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add .github/workflows/build.yml
+git commit -m "Add CI workflow that tests, builds, and commits dist on main"
+```
+
+- [ ] **Step 4: Repository setup by the owner (manual, outside the code)**
+
+1. Rename the local folder to `userscripts` and create the GitHub repository `ibmibmibm/userscripts`.
+2. Rename the local branch from `master` to `main` with `git branch -m master main`, so the workflow trigger and the `@downloadURL` match.
+3. In the repository settings under Actions, General, set Workflow permissions to "Read and write permissions" so the bot commit can push.
+4. Push `main` and make sure that the Build workflow passes, and that a "Build userscripts [skip ci]" commit appears when `dist/` was stale.
+
+---
+
 ## Self-review
 
-Spec coverage: pages and trigger (Task 9), modal structure and parser (Tasks 2, 3), analysis (Task 4), MusicBrainz lookup with barcode filter and catalog number fallback (Task 5), release choice and picker (Task 8), medium mapping with checkboxes, selects, and marks (Tasks 6, 8), MagicISRC URL and edit note (Task 7), UI block and error handling (Task 8), delivery and header (Task 1), testing with fixtures (Tasks 2 to 9), README (Task 9).
+Spec coverage: pages and trigger (Task 9), modal structure and parser (Tasks 2, 3), analysis (Task 4), MusicBrainz lookup with barcode filter and catalog number fallback (Task 5), release choice and picker (Task 8), medium mapping with checkboxes, selects, and marks (Tasks 6, 8), MagicISRC URL and edit note (Task 7), UI block and error handling (Task 8), delivery, multi-script layout, and header (Task 1), testing with fixtures (Tasks 2 to 9), READMEs (Task 9), CI workflow that commits `dist/` (Task 10).
 
-Type consistency: `MincRelease`, `MincDisc`, `MincTrack`, `MbReleaseHit`, `MbMedium` live in `src/types.ts`; `Analysis` in `src/analyze.ts`; `DiscMapping` in `src/mapping.ts`; `MagicIsrcEntry` in `src/magicisrc.ts`; `UiDeps` and `MARKER` in `src/ui.ts`. `loadFixture` lives in `test/helpers.ts` and is reused by every DOM test.
+Type consistency: `MincRelease`, `MincDisc`, `MincTrack`, `MbReleaseHit`, `MbMedium` live in `S/src/types.ts`; `Analysis` in `S/src/analyze.ts`; `DiscMapping` in `S/src/mapping.ts`; `MagicIsrcEntry` in `S/src/magicisrc.ts`; `UiDeps` and `MARKER` in `S/src/ui.ts`. `loadFixture`, `fixtureHtml`, `mbJson`, and `mbHits` live in `S/test/helpers.ts` and are reused by every test.
