@@ -59,10 +59,10 @@ Fixture facts (verified with jsdom, use these exact values in tests):
 
 | fixture | JASRAC area | NexTone area |
 |---|---|---|
-| `minc-70342415` | 作品名 `ＹＯＵＴＨＦＵＬ`, code `703-4241-5`, ISWC `T- 102.054.195-9`, 副題 `オープニング／ちはやふる（ＮＴＶ系アニメ）`, artist `９９ Ｒａｄｉｏ Ｓｅｒｖｉｃｅ`; credits `堀内 孝太`/`作詞 / 無信託 /`, `堀内 孝平`/作詞, `堀内 孝太`/作曲, `堀内 孝平`/作曲, `日本テレビ音楽 株式会社`/`出版者 / JASRAC /` | text `情報はありません`, no table |
-| `minc-25707965-N00913658` | 作品名 `ダーリンダンス`, code `257-0796-5`, ISWC `T- 302.445.339-8`, 副題 empty, artists `神田 沙也加`, `Ｋｏｔｏｎｅ`, `ＭｏｎｓｔｅｒＺ ＭＡＴＥ`; credits `かいりきベア`/`作詞 / 無信託 /`, `かいりきベア`/`作曲 / 無信託 /`, `ドワンゴ 第７事業部`/`出版者 / 部分信託 /` | code `N00913658`; credits `かいりきベア / <br>株式会社 ドワンゴ 第七事業部`/`作詞 / 出版社` and the same with `作曲 / 出版社` |
+| `minc-70342415` | 作品名 `ＹＯＵＴＨＦＵＬ`, code `703-4241-5`, ISWC `T- 102.054.195-9`, 副題 `オープニング／ちはやふる（ＮＴＶ系アニメ）`, artist `９９　Ｒａｄｉｏ　Ｓｅｒｖｉｃｅ`; credits `堀内　孝太`/`作詞 / 無信託 /`, `堀内　孝平`/作詞, `堀内　孝太`/作曲, `堀内　孝平`/作曲, `日本テレビ音楽　株式会社`/`出版者 / JASRAC /` | text `情報はありません`, no table |
+| `minc-25707965-N00913658` | 作品名 `ダーリンダンス`, code `257-0796-5`, ISWC `T- 302.445.339-8`, 副題 empty, artists `神田　沙也加`, `Ｋｏｔｏｎｅ`, `ＭｏｎｓｔｅｒＺ　ＭＡＴＥ`; credits `かいりきベア`/`作詞 / 無信託 /`, `かいりきベア`/`作曲 / 無信託 /`, `ドワンゴ　第７事業部`/`出版者 / 部分信託 /` | code `N00913658`; credits `かいりきベア / <br>株式会社 ドワンゴ 第七事業部`/`作詞 / 出版社` and the same with `作曲 / 出版社` |
 
-minc names use an ASCII space (`堀内 孝太`); J-WID names use U+3000 (`堀内　孝太`).
+minc JASRAC-area names and artists use U+3000 like J-WID (`堀内　孝太`); only the minc NexTone area uses ASCII spaces (`株式会社 ドワンゴ 第七事業部`).
 
 MusicBrainz fixtures (work "Lemon", `d69ecd96-bb2c-461f-9762-29102d2b50a1`): `mb-work-search-iswc.json` has `count` 1 and one hit with `iswcs: ["T-924.390.287-6"]`; `mb-work-search-title.json` has one hit; `mb-work-lookup.json` has `type: "Song"`, `languages: ["jpn"]`, `iswcs: ["T-924.390.287-6"]`, 12 attributes including `{ "type": "JASRAC ID", "value": "720-5540-5" }`, relations composer and lyricist to artist `米津玄師` (sort-name `Yonezu, Kenshi`) and three publishing relations to labels `HORIPRO`, `リイシューレコーズ`, `日音`.
 
@@ -763,13 +763,13 @@ describe("parseMinc", () => {
       { kind: "正題", title: "ＹＯＵＴＨＦＵＬ", kana: null, romaji: null, searchName: false },
       { kind: "副題", title: "オープニング／ちはやふる（ＮＴＶ系アニメ）", kana: null, romaji: null, searchName: false },
     ]);
-    expect(info.artists).toEqual(["９９ Ｒａｄｉｏ Ｓｅｒｖｉｃｅ"]);
+    expect(info.artists).toEqual(["９９　Ｒａｄｉｏ　Ｓｅｒｖｉｃｅ"]);
     expect(info.credits).toEqual([
-      { source: "JASRAC", name: "堀内 孝太", role: "作詞", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "堀内 孝平", role: "作詞", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "堀内 孝太", role: "作曲", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "堀内 孝平", role: "作曲", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "日本テレビ音楽 株式会社", role: "出版者", trust: "JASRAC", society: null, note: null },
+      { source: "JASRAC", name: "堀内　孝太", role: "作詞", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "堀内　孝平", role: "作詞", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "堀内　孝太", role: "作曲", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "堀内　孝平", role: "作曲", trust: "無信託", society: null, note: null },
+      { source: "JASRAC", name: "日本テレビ音楽　株式会社", role: "出版者", trust: "JASRAC", society: null, note: null },
     ]);
   });
 
@@ -781,11 +781,11 @@ describe("parseMinc", () => {
     expect(info.nextoneCode).toBe("N00913658");
     expect(info.iswc).toBe("T-302.445.339-8");
     expect(info.titles).toEqual([{ kind: "正題", title: "ダーリンダンス", kana: null, romaji: null, searchName: false }]);
-    expect(info.artists).toEqual(["神田 沙也加", "Ｋｏｔｏｎｅ", "ＭｏｎｓｔｅｒＺ ＭＡＴＥ"]);
+    expect(info.artists).toEqual(["神田　沙也加", "Ｋｏｔｏｎｅ", "ＭｏｎｓｔｅｒＺ　ＭＡＴＥ"]);
     expect(info.credits).toEqual([
       { source: "JASRAC", name: "かいりきベア", role: "作詞", trust: "無信託", society: null, note: null },
       { source: "JASRAC", name: "かいりきベア", role: "作曲", trust: "無信託", society: null, note: null },
-      { source: "JASRAC", name: "ドワンゴ 第７事業部", role: "出版者", trust: "部分信託", society: null, note: null },
+      { source: "JASRAC", name: "ドワンゴ　第７事業部", role: "出版者", trust: "部分信託", society: null, note: null },
       { source: "NexTone", name: "かいりきベア", role: "作詞", trust: null, society: null, note: null },
       { source: "NexTone", name: "株式会社 ドワンゴ 第七事業部", role: "出版社", trust: null, society: null, note: null },
       { source: "NexTone", name: "かいりきベア", role: "作曲", trust: null, society: null, note: null },
@@ -1717,9 +1717,9 @@ describe("buildEditNote", () => {
     const info = parseMinc(mincDocument("minc-25707965-N00913658"))!;
     const note = buildEditNote(info, "1.0.0");
     expect(note.startsWith("ダーリンダンス (JASRAC 257-0796-5 / NexTone N00913658 / ISWC T-302.445.339-8)\n")).toBe(true);
-    expect(note).toContain("\nCREDITS\n作詞：かいりきベア（無信託）\n作曲：かいりきベア（無信託）\n出版者：ドワンゴ 第７事業部（部分信託）\n[NexTone] 作詞：かいりきベア\n[NexTone] 出版社：株式会社 ドワンゴ 第七事業部\n[NexTone] 作曲：かいりきベア\n\n");
+    expect(note).toContain("\nCREDITS\n作詞：かいりきベア（無信託）\n作曲：かいりきベア（無信託）\n出版者：ドワンゴ　第７事業部（部分信託）\n[NexTone] 作詞：かいりきベア\n[NexTone] 出版社：株式会社 ドワンゴ 第七事業部\n[NexTone] 作曲：かいりきベア\n\n");
     expect(note).toContain("\nTITLES\n正題：ダーリンダンス\n\n");
-    expect(note).toContain("\nPERFORMERS\n神田 沙也加\nＫｏｔｏｎｅ\nＭｏｎｓｔｅｒＺ ＭＡＴＥ\n\n");
+    expect(note).toContain("\nPERFORMERS\n神田　沙也加\nＫｏｔｏｎｅ\nＭｏｎｓｔｅｒＺ　ＭＡＴＥ\n\n");
     expect(note.endsWith("\nhttps://www.minc.or.jp/saku/detail/?jcd=25707965&ncd=N00913658\nJASRAC / MINC work to MusicBrainz v1.0.0")).toBe(true);
   });
 
