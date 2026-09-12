@@ -50,7 +50,7 @@ export function toReleaseHit(json: unknown): MbReleaseHit {
 
 async function runQuery(query: string, fetchFn: typeof fetch): Promise<MbReleaseHit[]> {
   const url = `${WS}?fmt=json&limit=25&query=${encodeURIComponent(query)}`;
-  const res = await fetchFn(url, { headers: { Accept: "application/json" } });
+  const res = await fetchFn(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`MusicBrainz responded with HTTP ${res.status}`);
   const body = (await res.json()) as Json;
   const releases = Array.isArray(body.releases) ? (body.releases as unknown[]) : [];

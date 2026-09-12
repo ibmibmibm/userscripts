@@ -105,6 +105,17 @@ describe("searchReleases", () => {
     await searchReleases(r, f);
     expect((seenInit?.headers as Record<string, string>)["Accept"]).toBe("application/json");
   });
+
+  it("aborts the request after a timeout", async () => {
+    const r = parseProductModal(loadFixture("single-cd"))!;
+    let seenInit: RequestInit | undefined;
+    const f = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      seenInit = init;
+      return new Response(JSON.stringify(mb("barcode-single-cd")), { status: 200 });
+    }) as unknown as typeof fetch;
+    await searchReleases(r, f);
+    expect(seenInit?.signal).toBeInstanceOf(AbortSignal);
+  });
 });
 
 describe("mbSearchUrl", () => {
