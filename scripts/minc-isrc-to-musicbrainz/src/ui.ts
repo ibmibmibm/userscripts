@@ -197,6 +197,8 @@ export function enhanceModalBody(body: Element, deps: UiDeps): boolean {
     open.hidden = true;
     mappingBox.hidden = true;
     warnings.textContent = "";
+    picker.hidden = true;
+    picker.textContent = "";
     setStatus("Searching MusicBrainz...");
     try {
       const hits = await deps.search(release);

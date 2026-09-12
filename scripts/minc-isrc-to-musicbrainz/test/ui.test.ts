@@ -128,4 +128,39 @@ describe("enhanceModalBody", () => {
     expect(body2.querySelector(".minc-isrc-mb-status")!.textContent).toBe("MusicBrainz lookup failed (HTTP 503). Try again.");
     expect(body2.querySelector(".minc-isrc-mb-nombid")).not.toBeNull();
   });
+
+  it("hides and clears the stale picker when searching again", async () => {
+    const body = loadFixture("two-cd-duplicate");
+    const hits = mbHits("catno-multi", toReleaseHit);
+    const singleHit = hit("barcode-single-cd");
+    let call = 0;
+    let resolveSecond!: (v: MbReleaseHit[]) => void;
+    const secondSearch = new Promise<MbReleaseHit[]>((r) => {
+      resolveSecond = r;
+    });
+    const { d } = deps({
+      search: async () => {
+        call += 1;
+        return call === 1 ? hits : secondSearch;
+      },
+    });
+    enhanceModalBody(body, d);
+    const submit = body.querySelector<HTMLButtonElement>(".minc-isrc-mb-submit")!;
+
+    submit.click();
+    await tick();
+    expect(body.querySelectorAll(".minc-isrc-mb-picker .minc-isrc-mb-use").length).toBe(2);
+
+    submit.click();
+    await tick();
+    const picker = body.querySelector<HTMLElement>(".minc-isrc-mb-picker")!;
+    expect(picker.hidden).toBe(true);
+    expect(picker.textContent).toBe("");
+    expect(picker.querySelectorAll(".minc-isrc-mb-use").length).toBe(0);
+
+    resolveSecond([singleHit]);
+    await tick();
+    expect(body.querySelector(".minc-isrc-mb-status")!.textContent).toContain(singleHit.title);
+    expect(body.querySelectorAll(".minc-isrc-mb-mapping tbody tr").length).toBe(2);
+  });
 });
