@@ -287,9 +287,10 @@ All requests go to `https://musicbrainz.org/ws/2/` with
 503 is retried up to two more times after a 2 s wait; any other non-OK
 status throws `MusicBrainz responded with HTTP <status>`.
 
-- `searchByIswc(iswc): WorkHit[]` — `work/?fmt=json&limit=25&query=iswc:<digits>`
-  where digits are the ISWC without `T`, `-`, and `.`. Hits are filtered
-  to those whose `iswcs` array contains the normalized ISWC.
+- `searchByIswc(iswc): WorkHit[]` — `work/?fmt=json&limit=25&query=iswc:"<iswc>"`
+  with the formatted ISWC (`T-924.390.287-6`) in double quotes; the
+  digits-only form returns nothing. Hits are filtered to those whose
+  `iswcs` array contains the normalized ISWC.
 - `searchByTitle(title): WorkHit[]` — `work/?fmt=json&limit=25&query=work:"<escaped displayTitle>"`.
 - `lookupWork(mbid): MbWork` — `work/<mbid>?fmt=json&inc=artist-rels+label-rels`.
 
@@ -482,9 +483,14 @@ Fixtures under `test/fixtures/`:
   ＳＭＩＬＥ, two subtitles, one search name, publisher without marker).
 - minc: `minc-70342415.html` (JASRAC area only, empty NexTone area),
   `minc-25707965-N00913658.html` (both areas, paired NexTone rows).
-- MusicBrainz: `mb-work-search-iswc.json`, `mb-work-search-title.json`,
-  `mb-work-lookup.json` (a work with one lyricist, one composer, one
-  ISWC, and a JASRAC ID attribute), captured from the live service.
+- MusicBrainz, captured from the live service for the work "Lemon"
+  (d69ecd96-bb2c-461f-9762-29102d2b50a1): `mb-work-search-iswc.json`
+  (query `iswc:"T-924.390.287-6"`, one hit), `mb-work-search-title.json`
+  (query `work:"Lemon" AND artist:"米津玄師"`, one hit),
+  `mb-work-lookup.json` (lookup with `inc=artist-rels+label-rels`: type
+  Song, language jpn, one ISWC, twelve attributes including JASRAC ID
+  `720-5540-5`, lyricist and composer 米津玄師 / sort name `Yonezu,
+  Kenshi`, three publishing relations).
 
 Fixtures are captured from the live pages with the session-specific
 parts (nonces, session ids, script tags) removed. Each fixture test
