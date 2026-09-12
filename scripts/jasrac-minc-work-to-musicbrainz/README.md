@@ -16,7 +16,7 @@ in a new tab with the fields prefilled. You review and submit on MusicBrainz.
 1. Open a work detail page on J-WID (`作品詳細画面`) or on MINC (`/saku/detail/`, needs a MINC login).
 2. The panel lists the relationships it will seed: 作詞 → lyricist, 補詞 → additional lyricist, 訳詞 → translator,
    作曲 → composer, 編曲 → arranger, 作曲作詞 and 不明 → writer, 出版者 / 出版社 → publisher, サブ出版 → sub-publisher.
-   Names are folded for the MusicBrainz search (`堀内　孝太` → `堀内孝太`, `日本テレビ音楽　株式会社` → `日本テレビ音楽`).
+   Names are folded for the seeded relationship target (`堀内　孝太` → `堀内孝太`, `日本テレビ音楽　株式会社` → `日本テレビ音楽`).
    The edit note keeps the original spelling.
 3. When the work has an ISWC the panel searches MusicBrainz for it. One hit is preselected. Use "Search by title"
    or paste a MusicBrainz work URL or MBID to pick another work.
