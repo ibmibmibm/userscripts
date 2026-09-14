@@ -18,8 +18,8 @@ in a new tab with the fields prefilled. You review and submit on MusicBrainz.
    作曲 → composer, 編曲 → arranger, 作曲作詞 and 不明 → writer, 出版者 / 出版社 → publisher, サブ出版 → sub-publisher.
    Names are folded for the seeded relationship target (`堀内　孝太` → `堀内孝太`, `日本テレビ音楽　株式会社` → `日本テレビ音楽`).
    The edit note keeps the original spelling.
-3. When the work has an ISWC the panel searches MusicBrainz for it. One hit is preselected. Use "Search by title"
-   or paste a MusicBrainz work URL or MBID to pick another work.
+3. When the work has an ISWC, click "Search by ISWC" to search MusicBrainz for it. One hit is preselected. Use
+   "Search by title" or paste a MusicBrainz work URL or MBID to pick another work.
 4. Click "Create work in MusicBrainz" to open a prefilled new-work form, or "Update …" to open the edit form of the
    selected work with only the missing ISWC, codes, type or language, and relationships added.
 5. Check every seeded relationship on MusicBrainz. JASRAC sometimes lists wrong or duplicate credits, and a seeded

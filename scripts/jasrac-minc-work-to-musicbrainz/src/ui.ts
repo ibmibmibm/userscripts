@@ -94,11 +94,15 @@ export function enhancePage(doc: Document, info: WorkInfo, deps: UiDeps): HTMLEl
   ref.type = "text";
   ref.placeholder = "MusicBrainz work URL or MBID";
   ref.style.width = "24em";
+  const searchIswc = el(doc, "button", "search-iswc", "Search by ISWC");
+  searchIswc.type = "button";
   const search = el(doc, "button", "search", "Search by title");
   search.type = "button";
   const status = el(doc, "span", "status");
   status.style.marginLeft = "8px";
-  targetRow.append(ref, " ", search, status);
+  targetRow.append(ref, " ");
+  if (info.iswc) targetRow.append(searchIswc, " ");
+  targetRow.append(search, status);
 
   const picker = el(doc, "div", "picker");
   const diffBox = el(doc, "div", "diff");
@@ -253,12 +257,14 @@ export function enhancePage(doc: Document, info: WorkInfo, deps: UiDeps): HTMLEl
     );
   };
 
-  search.addEventListener("click", () => {
+  const startSearch = (kind: "iswc" | "title") => {
     if (state.searching) return;
     ref.value = "";
     setTarget(null);
-    runSearch("title");
-  });
+    runSearch(kind);
+  };
+  searchIswc.addEventListener("click", () => startSearch("iswc"));
+  search.addEventListener("click", () => startSearch("title"));
 
   const openUrl = (build: (note: string) => string) => {
     notice.textContent = "";
@@ -292,6 +298,5 @@ export function enhancePage(doc: Document, info: WorkInfo, deps: UiDeps): HTMLEl
     else doc.body.prepend(panel);
   }
 
-  if (info.iswc) runSearch("iswc");
   return panel;
 }

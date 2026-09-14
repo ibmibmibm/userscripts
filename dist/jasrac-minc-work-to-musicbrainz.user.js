@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JASRAC / MINC work to MusicBrainz
 // @namespace    https://github.com/ibmibmibm/userscripts
-// @version      1.0.0
+// @version      1.1.0
 // @description  Create or update a MusicBrainz work from a J-WID (JASRAC) or MINC (音楽権利情報検索ナビ) work detail page, with ISWC, codes, credits, and edit note prefilled
 // @author       Shen-Ta Hsieh
 // @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/jasrac-minc-work-to-musicbrainz.user.js
@@ -580,11 +580,15 @@
     ref.type = "text";
     ref.placeholder = "MusicBrainz work URL or MBID";
     ref.style.width = "24em";
+    const searchIswc = el(doc, "button", "search-iswc", "Search by ISWC");
+    searchIswc.type = "button";
     const search2 = el(doc, "button", "search", "Search by title");
     search2.type = "button";
     const status = el(doc, "span", "status");
     status.style.marginLeft = "8px";
-    targetRow.append(ref, " ", search2, status);
+    targetRow.append(ref, " ");
+    if (info.iswc) targetRow.append(searchIswc, " ");
+    targetRow.append(search2, status);
     const picker = el(doc, "div", "picker");
     const diffBox = el(doc, "div", "diff");
     const actions = el(doc, "div", "actions");
@@ -729,12 +733,14 @@
         }
       );
     };
-    search2.addEventListener("click", () => {
+    const startSearch = (kind) => {
       if (state.searching) return;
       ref.value = "";
       setTarget(null);
-      runSearch("title");
-    });
+      runSearch(kind);
+    };
+    searchIswc.addEventListener("click", () => startSearch("iswc"));
+    search2.addEventListener("click", () => startSearch("title"));
     const openUrl = (build) => {
       notice.textContent = "";
       const { url, dropped } = fitUrl(build, info, deps.version);
@@ -764,12 +770,11 @@
       if (area?.parentNode) area.parentNode.insertBefore(panel, area);
       else doc.body.prepend(panel);
     }
-    if (info.iswc) runSearch("iswc");
     return panel;
   }
 
   // scripts/jasrac-minc-work-to-musicbrainz/src/main.ts
-  var VERSION = true ? "1.0.0" : "dev";
+  var VERSION = true ? "1.1.0" : "dev";
   function siteOf(hostname) {
     if (hostname === "www2.jasrac.or.jp") return "jwid";
     if (hostname === "www.minc.or.jp") return "minc";

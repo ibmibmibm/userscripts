@@ -60,7 +60,7 @@ describe("enhancePage", () => {
     expect(q(panel, "skipped").textContent).toContain("not mapped");
   });
 
-  it("searches by ISWC on creation, preselects a single hit, and enables Update after lookup", async () => {
+  it("does not search on creation, then searches by ISWC on click, preselects a single hit, and enables Update", async () => {
     const doc = jwidDocument("jwid-70342415");
     const calls: string[] = [];
     const { d, opened } = deps({
@@ -70,6 +70,10 @@ describe("enhancePage", () => {
       },
     });
     const panel = enhancePage(doc, parseJwid(doc)!, d);
+    await settle();
+    expect(calls).toEqual([]);
+    expect(q(panel, "status").textContent).toBe("");
+    q<HTMLButtonElement>(panel, "search-iswc").click();
     expect(q(panel, "status").textContent).toBe("Searching MusicBrainz by ISWC…");
     await settle();
     expect(calls).toEqual(["T-102.054.195-9"]);
@@ -88,16 +92,22 @@ describe("enhancePage", () => {
     expect(opened[0]).toContain("edit-work.iswcs.1=T-102.054.195-9");
   });
 
-  it("reports no ISWC hit and does not search when the work has no ISWC", async () => {
+  it("reports no ISWC hit, clears a pasted target on click, and hides the button when the work has no ISWC", async () => {
     const doc = jwidDocument("jwid-70342415");
     const panel = enhancePage(doc, parseJwid(doc)!, deps().d);
+    const ref = q<HTMLInputElement>(panel, "ref");
+    ref.value = LEMON;
+    ref.dispatchEvent(new doc.defaultView!.Event("input"));
     await settle();
+    expect(q<HTMLButtonElement>(panel, "update").disabled).toBe(false);
+    q<HTMLButtonElement>(panel, "search-iswc").click();
+    await settle();
+    expect(ref.value).toBe("");
+    expect(q<HTMLButtonElement>(panel, "update").disabled).toBe(true);
     expect(q(panel, "status").textContent).toBe("No work with this ISWC");
     const doc2 = jwidDocument("jwid-15233952");
-    let called = false;
-    const panel2 = enhancePage(doc2, parseJwid(doc2)!, deps({ searchByIswc: async () => ((called = true), []) }).d);
-    await settle();
-    expect(called).toBe(false);
+    const panel2 = enhancePage(doc2, parseJwid(doc2)!, deps().d);
+    expect(panel2.querySelector(".jasrac-minc-mb-search-iswc")).toBeNull();
     expect(q(panel2, "status").textContent).toBe("");
   });
 
@@ -130,6 +140,7 @@ describe("enhancePage", () => {
     const doc = jwidDocument("jwid-70342415");
     const { d } = deps({ searchByIswc: async () => [lemonHit()], searchByTitle: async () => [lemonHit()] });
     const panel = enhancePage(doc, parseJwid(doc)!, d);
+    q<HTMLButtonElement>(panel, "search-iswc").click();
     await settle();
     expect(q<HTMLButtonElement>(panel, "update").disabled).toBe(false);
     q<HTMLButtonElement>(panel, "search").click();
@@ -150,6 +161,7 @@ describe("enhancePage", () => {
       },
     });
     const panel = enhancePage(doc, parseJwid(doc)!, d);
+    q<HTMLButtonElement>(panel, "search-iswc").click();
     await settle();
     const input = q<HTMLInputElement>(panel, "ref");
     input.value = "not a work";
@@ -172,6 +184,7 @@ describe("enhancePage", () => {
     info.credits = [];
     const { d } = deps({ searchByIswc: async () => [lemonHit()] });
     const panel = enhancePage(doc, info, d);
+    q<HTMLButtonElement>(panel, "search-iswc").click();
     await settle();
     expect(q(panel, "diff").textContent).toBe("Nothing to add");
     expect(q<HTMLButtonElement>(panel, "update").disabled).toBe(true);
@@ -187,6 +200,7 @@ describe("enhancePage", () => {
       },
     });
     const panel = enhancePage(doc, parseJwid(doc)!, d);
+    q<HTMLButtonElement>(panel, "search-iswc").click();
     await settle();
     expect(q(panel, "status").textContent).toBe("Work not found");
     expect(q<HTMLButtonElement>(panel, "update").disabled).toBe(true);
@@ -211,6 +225,7 @@ describe("enhancePage", () => {
       lookupWork: () => new Promise<MbWork>((r) => pending.push(r)),
     });
     const panel = enhancePage(doc, parseJwid(doc)!, d);
+    q<HTMLButtonElement>(panel, "search-iswc").click();
     await settle();
     const input = q<HTMLInputElement>(panel, "ref");
     input.value = "33333333-3333-4333-8333-333333333333";
