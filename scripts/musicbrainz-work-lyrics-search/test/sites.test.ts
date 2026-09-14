@@ -1,4 +1,8 @@
+import { SITES } from "../src/sites";
 import { jLyric } from "../src/sites/j-lyric";
+import { joysound } from "../src/sites/joysound";
+import { kashinavi } from "../src/sites/kashinavi";
+import { petitlyrics } from "../src/sites/petitlyrics";
 import { utaNet } from "../src/sites/uta-net";
 import { utaten } from "../src/sites/utaten";
 import type { Query } from "../src/types";
@@ -47,5 +51,54 @@ describe("uta-net", () => {
     expect(rows.length).toBe(3);
     expect(rows[0]).toEqual({ url: "https://www.uta-net.com/song/268773/", title: "California Lemon Trees", artist: "少年ナイフ", lyricist: "Naoko", composer: "Naoko" });
     expect(rows[2]).toEqual({ url: "https://www.uta-net.com/song/314771/", title: "SUGAR×LEMONADE", artist: "シュガーポケッツ", lyricist: "永井正道", composer: "永井正道" });
+  });
+});
+
+describe("kashinavi", () => {
+  it("sends all four fields and declares Shift_JIS", () => {
+    expect(kashinavi.charset).toBe("shift_jis");
+    expect(kashinavi.buildUrl(full)).toBe("https://kashinavi.com/search.php?kyoku=Lemon&kashu=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB&sakushi=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB&sakkyoku=%E7%B1%B3%E6%B4%A5+%E7%8E%84%E5%B8%AB&start=1");
+    expect(kashinavi.buildUrl(titleOnly)).toBe("https://kashinavi.com/search.php?kyoku=Lemon&start=1");
+  });
+
+  it("parses title and artist rows from the result table", () => {
+    const rows = kashinavi.parse(siteDocument("kashinavi-search", "https://kashinavi.com/search.php?kyoku=Lemon&start=1"), kashinavi.origin);
+    expect(rows.length).toBe(6);
+    expect(rows[0]).toEqual({ url: "https://kashinavi.com/lyrics/159368/", title: "Lime & Lemon", artist: "東方神起", lyricist: "", composer: "" });
+    expect(rows[5].title).toBe("フェス!!最高 (from 2010.5.17 渋谷C.C.Lemonホール)");
+    expect(rows[5].artist).toBe("グループ魂");
+  });
+});
+
+describe("petitlyrics", () => {
+  it("sends title and artist", () => {
+    expect(petitlyrics.buildUrl(full)).toBe("https://petitlyrics.com/search_lyrics?title=Lemon&artist=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB");
+    expect(petitlyrics.buildUrl(titleOnly)).toBe("https://petitlyrics.com/search_lyrics?title=Lemon");
+  });
+
+  it("parses title and artist rows", () => {
+    const rows = petitlyrics.parse(siteDocument("petitlyrics-search", "https://petitlyrics.com/search_lyrics?title=Lemon"), petitlyrics.origin);
+    expect(rows.length).toBe(5);
+    expect(rows[0]).toEqual({ url: "https://petitlyrics.com/lyrics/146932", title: "LEMON", artist: "serial TV drama", lyricist: "", composer: "" });
+    expect(rows[4]).toEqual({ url: "https://petitlyrics.com/lyrics/1177020", title: "LEMON TEA", artist: "SHEENA & THE ROKKETS", lyricist: "", composer: "" });
+  });
+});
+
+describe("joysound", () => {
+  it("sends the title as the keyword", () => {
+    expect(joysound.buildUrl(full)).toBe("https://www.joysound.com/web/search/song?keyword=Lemon&match=1");
+  });
+
+  it("parses song cards", () => {
+    const rows = joysound.parse(siteDocument("joysound-search", "https://www.joysound.com/web/search/song?keyword=Lemon&match=1"), joysound.origin);
+    expect(rows.length).toBe(5);
+    expect(rows[0]).toEqual({ url: "https://www.joysound.com/web/search/song/669975", title: "Lemon", artist: "米津玄師", lyricist: "", composer: "" });
+    expect(rows[3]).toEqual({ url: "https://www.joysound.com/web/search/song/5904587", title: "LEMONADE", artist: "aespa (aespa)", lyricist: "", composer: "" });
+  });
+});
+
+describe("SITES", () => {
+  it("lists the six sites in display order with unique ids", () => {
+    expect(SITES.map((s) => s.id)).toEqual(["j-lyric", "utaten", "uta-net", "kashinavi", "petitlyrics", "joysound"]);
   });
 });
