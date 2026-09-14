@@ -43,7 +43,8 @@ On the edit page:
   distinct `artist-credit` names (the joined credit phrase per recording)
 
 Several names in one field are joined with ` / `. The requests run once at startup, one after the
-other, with the `User-Agent` and `Accept` headers the other scripts use. If a request fails, the
+other, with the `Accept: application/json` header the other scripts use (the browser sets the
+`User-Agent`). If a request fails, the
 field stays empty and the status line reports it. On the create page only the title is filled.
 
 Every field stays editable. A search reads the current values.
@@ -111,8 +112,9 @@ site's own order. Matched fields are shown in bold.
 ## Adding a link
 
 Each row shows the site page as a link that opens in a new tab and an "Add" button. Rows whose URL
-already appears in the external links editor (`#external-links-editor input[type=url]` values,
-compared after trimming a trailing slash) are marked "added" and have no button.
+already appears in the external links editor (saved links are `#external-links-editor a.url`
+hrefs, typed links are `input[type=url]` values, compared after trimming a trailing slash) are
+marked "added" and have no button.
 
 "Add" writes the URL into the empty url input of the external links editor with the native
 `HTMLInputElement` value setter and dispatches an `input` event. MusicBrainz then creates the link
@@ -139,10 +141,11 @@ status line says "Could not add, paste the URL by hand".
 - `src/rank.ts`: `scoreRow(query, row)`, `rankRows(query, rows)`
 - `src/musicbrainz.ts`: `mbidFromUrl(href)`, `lookupWorkPeople(mbid, fetchJson)`
 - `src/sites/<id>.ts` and `src/sites/index.ts` (the six modules and the list)
-- `src/fetch.ts`: `gmFetchDocument(url)` wrapper around `GM_xmlhttpRequest`
+- `src/fetch.ts`: `gmFetchText(url, charset, request)` wrapper around `GM_xmlhttpRequest`
 - `src/links.ts`: `existingLinks(doc)`, `addLink(doc, url): Promise<boolean>`
 - `src/ui.ts`: `enhancePage(doc, info, deps)` with
-  `UiDeps { version, sites, fetchDocument, lookupPeople, addLink, open }`
+  `UiDeps { version, sites, fetchText, lookupPeople, hasLink, addLink }`; the Musixmatch link is a
+  plain `target="_blank"` anchor
 - `README.md`
 
 The root README gets a row for the new script.
