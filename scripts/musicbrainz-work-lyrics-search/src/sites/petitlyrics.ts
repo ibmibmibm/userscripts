@@ -14,7 +14,9 @@ export const petitlyrics: Site = {
       const link = title.closest("a");
       const cell = title.closest("td");
       if (!link || !cell) continue;
-      rows.push(row({ url: abs(origin, link.getAttribute("href")), title: text(title), artist: text(cell.querySelector(".lyrics-list-artist")) }));
+      const url = abs(origin, link.getAttribute("href"));
+      if (!url) continue;
+      rows.push(row({ url, title: text(title), artist: text(cell.querySelector(".lyrics-list-artist")) }));
     }
     return rows;
   },

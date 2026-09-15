@@ -18,8 +18,10 @@ export const jLyric: Site = {
     for (const bdy of Array.from(doc.querySelectorAll("div.bdy"))) {
       const link = bdy.querySelector("p.mid a");
       if (!link) continue;
+      const url = abs(origin, link.getAttribute("href"));
+      if (!url) continue;
       const singer = Array.from(bdy.querySelectorAll("p.sml")).find((p) => text(p).startsWith("歌："));
-      rows.push(row({ url: abs(origin, link.getAttribute("href")), title: text(link), artist: text(singer?.querySelector("a")) }));
+      rows.push(row({ url, title: text(link), artist: text(singer?.querySelector("a")) }));
     }
     return rows;
   },

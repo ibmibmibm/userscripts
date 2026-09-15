@@ -14,10 +14,12 @@ export const utaNet: Site = {
       const title = tr.querySelector(".songlist-title");
       const link = tr.querySelector("td a");
       if (!title || !link) continue;
+      const url = abs(origin, link.getAttribute("href"));
+      if (!url) continue;
       const cells = tr.querySelectorAll("td");
       rows.push(
         row({
-          url: abs(origin, link.getAttribute("href")),
+          url,
           title: text(title),
           artist: text(cells[1]),
           lyricist: text(cells[2]),

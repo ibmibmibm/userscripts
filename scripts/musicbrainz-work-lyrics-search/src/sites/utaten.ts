@@ -19,10 +19,12 @@ export const utaten: Site = {
     for (const tr of Array.from(doc.querySelectorAll("table.searchResult tr"))) {
       const link = tr.querySelector(".searchResult__title a");
       if (!link) continue;
+      const url = abs(origin, link.getAttribute("href"));
+      if (!url) continue;
       const writersCell = tr.querySelector(".searchResult__lyricist");
       rows.push(
         row({
-          url: abs(origin, link.getAttribute("href")),
+          url,
           title: text(link),
           artist: text(tr.querySelector(".searchResult__artist > p a")),
           lyricist: writers(writersCell, "作詞"),

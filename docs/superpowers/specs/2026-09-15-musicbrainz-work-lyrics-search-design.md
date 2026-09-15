@@ -76,6 +76,8 @@ Empty query fields are left out of the request. Query strings for a filled field
 | petitlyrics | `https://petitlyrics.com/search_lyrics?title=&artist=` | title, artist | title, artist |
 | JOYSOUND | `https://www.joysound.com/web/search/song?keyword=<title>&match=1` | title | title, artist |
 
+kashinavi requests are Shift_JIS-encoded: its query values are percent-encoded as Shift_JIS bytes rather than UTF-8, because the site decodes the query string as Shift_JIS and otherwise returns no hits for Japanese text.
+
 Selectors captured on 2026-09-15:
 
 - j-lyric: `div.bdy` blocks, title in `p.mid a`, artist in `p.sml a` after `歌：`

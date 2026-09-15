@@ -1,3 +1,4 @@
+import { JSDOM } from "jsdom";
 import { SITES } from "../src/sites";
 import { jLyric } from "../src/sites/j-lyric";
 import { joysound } from "../src/sites/joysound";
@@ -10,11 +11,16 @@ import { siteDocument } from "./helpers";
 
 const full: Query = { title: "Lemon", artist: "米津玄師", lyricist: "米津玄師", composer: "米津 玄師" };
 const titleOnly: Query = { title: "Lemon", artist: "", lyricist: "", composer: "" };
+const titleJapanese: Query = { title: "レモン", artist: "", lyricist: "", composer: "" };
 
 describe("j-lyric", () => {
   it("builds a contains-match title and artist search", () => {
     expect(jLyric.buildUrl(full)).toBe("https://j-lyric.net/search.php?kt=Lemon&ct=2&ka=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB&ca=2");
     expect(jLyric.buildUrl(titleOnly)).toBe("https://j-lyric.net/search.php?kt=Lemon&ct=2");
+  });
+
+  it("percent-encodes a Japanese title as UTF-8", () => {
+    expect(jLyric.buildUrl(titleJapanese)).toBe("https://j-lyric.net/search.php?kt=%E3%83%AC%E3%83%A2%E3%83%B3&ct=2");
   });
 
   it("parses title and artist rows", () => {
@@ -29,6 +35,10 @@ describe("utaten", () => {
   it("sends all four fields", () => {
     expect(utaten.buildUrl(full)).toBe("https://utaten.com/search?title=Lemon&artist_name=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB&lyricist=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB&composer=%E7%B1%B3%E6%B4%A5+%E7%8E%84%E5%B8%AB");
     expect(utaten.buildUrl(titleOnly)).toBe("https://utaten.com/search?title=Lemon");
+  });
+
+  it("percent-encodes a Japanese title as UTF-8", () => {
+    expect(utaten.buildUrl(titleJapanese)).toBe("https://utaten.com/search?title=%E3%83%AC%E3%83%A2%E3%83%B3");
   });
 
   it("parses title, artist, lyricist, and composer rows", () => {
@@ -46,6 +56,10 @@ describe("uta-net", () => {
     expect(utaNet.buildUrl(full)).toBe("https://www.uta-net.com/search/?target=songtitle&type=in&Keyword=Lemon");
   });
 
+  it("percent-encodes a Japanese title as UTF-8", () => {
+    expect(utaNet.buildUrl(titleJapanese)).toBe("https://www.uta-net.com/search/?target=songtitle&type=in&Keyword=%E3%83%AC%E3%83%A2%E3%83%B3");
+  });
+
   it("parses the song list table", () => {
     const rows = utaNet.parse(siteDocument("uta-net-search", "https://www.uta-net.com/search/?target=songtitle&type=in&Keyword=Lemon"), utaNet.origin);
     expect(rows.length).toBe(3);
@@ -55,10 +69,16 @@ describe("uta-net", () => {
 });
 
 describe("kashinavi", () => {
-  it("sends all four fields and declares Shift_JIS", () => {
+  it("sends all four fields, Shift_JIS-encoded, and declares Shift_JIS", () => {
     expect(kashinavi.charset).toBe("shift_jis");
-    expect(kashinavi.buildUrl(full)).toBe("https://kashinavi.com/search.php?kyoku=Lemon&kashu=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB&sakushi=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB&sakkyoku=%E7%B1%B3%E6%B4%A5+%E7%8E%84%E5%B8%AB&start=1");
-    expect(kashinavi.buildUrl(titleOnly)).toBe("https://kashinavi.com/search.php?kyoku=Lemon&start=1");
+    expect(kashinavi.buildUrl(full)).toBe(
+      "https://kashinavi.com/search.php?kyoku=%4C%65%6D%6F%6E&kashu=%95%C4%92%C3%8C%BA%8E%74&sakushi=%95%C4%92%C3%8C%BA%8E%74&sakkyoku=%95%C4%92%C3%20%8C%BA%8E%74&start=%31",
+    );
+    expect(kashinavi.buildUrl(titleOnly)).toBe("https://kashinavi.com/search.php?kyoku=%4C%65%6D%6F%6E&start=%31");
+  });
+
+  it("percent-encodes a Japanese title as Shift_JIS", () => {
+    expect(kashinavi.buildUrl(titleJapanese)).toBe("https://kashinavi.com/search.php?kyoku=%83%8C%83%82%83%93&start=%31");
   });
 
   it("parses title and artist rows from the result table", () => {
@@ -68,12 +88,33 @@ describe("kashinavi", () => {
     expect(rows[5].title).toBe("フェス!!最高 (from 2010.5.17 渋谷C.C.Lemonホール)");
     expect(rows[5].artist).toBe("グループ魂");
   });
+
+  it("returns no rows on a no-hit page (ignoring the unrelated new-songs table)", () => {
+    const rows = kashinavi.parse(
+      siteDocument("kashinavi-empty", "https://kashinavi.com/search.php?kyoku=%83%8C%83%82%83%93%83%8C%83%82%83%93%83%8C%83%82%83%93&start=1"),
+      kashinavi.origin,
+    );
+    expect(rows).toEqual([]);
+  });
+
+  it("drops a row whose link uses a javascript: scheme", () => {
+    const html = `<table>
+      <tr><td></td><td>- - - ◆　曲名</td><td>- - - ◆　歌手名</td><td>- - - ◆　歌い出し</td><td>- - - ◆　ミニ情報</td></tr>
+      <tr><td></td><td><a href="javascript:location.href='/lyrics/1/'">Bad</a></td><td><a href="/artist/1">Artist</a></td><td></td><td></td></tr>
+    </table>`;
+    const doc = new JSDOM(html).window.document;
+    expect(kashinavi.parse(doc, kashinavi.origin)).toEqual([]);
+  });
 });
 
 describe("petitlyrics", () => {
   it("sends title and artist", () => {
     expect(petitlyrics.buildUrl(full)).toBe("https://petitlyrics.com/search_lyrics?title=Lemon&artist=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB");
     expect(petitlyrics.buildUrl(titleOnly)).toBe("https://petitlyrics.com/search_lyrics?title=Lemon");
+  });
+
+  it("percent-encodes a Japanese title as UTF-8", () => {
+    expect(petitlyrics.buildUrl(titleJapanese)).toBe("https://petitlyrics.com/search_lyrics?title=%E3%83%AC%E3%83%A2%E3%83%B3");
   });
 
   it("parses title and artist rows", () => {
@@ -87,6 +128,10 @@ describe("petitlyrics", () => {
 describe("joysound", () => {
   it("sends the title as the keyword", () => {
     expect(joysound.buildUrl(full)).toBe("https://www.joysound.com/web/search/song?keyword=Lemon&match=1");
+  });
+
+  it("percent-encodes a Japanese title as UTF-8", () => {
+    expect(joysound.buildUrl(titleJapanese)).toBe("https://www.joysound.com/web/search/song?keyword=%E3%83%AC%E3%83%A2%E3%83%B3&match=1");
   });
 
   it("parses song cards", () => {

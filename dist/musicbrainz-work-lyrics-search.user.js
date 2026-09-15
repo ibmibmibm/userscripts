@@ -137,12 +137,22 @@
   function abs(origin, href) {
     if (!href) return "";
     try {
-      return new URL(href, origin).toString();
+      const u = new URL(href, origin);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return "";
+      return u.toString();
     } catch {
       return "";
     }
   }
-  function withParams(base, params) {
+  function withParams(base, params, encode) {
+    if (encode) {
+      const parts = [];
+      for (const [k, v] of Object.entries(params)) {
+        const trimmed = v.trim();
+        if (trimmed) parts.push(`${k}=${encode(trimmed)}`);
+      }
+      return parts.length ? `${base}?${parts.join("&")}` : base;
+    }
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (v.trim()) p.set(k, v.trim());
     const s = p.toString();
@@ -170,8 +180,10 @@
       for (const bdy of Array.from(doc.querySelectorAll("div.bdy"))) {
         const link = bdy.querySelector("p.mid a");
         if (!link) continue;
+        const url = abs(origin, link.getAttribute("href"));
+        if (!url) continue;
         const singer = Array.from(bdy.querySelectorAll("p.sml")).find((p) => text(p).startsWith("歌："));
-        rows.push(row({ url: abs(origin, link.getAttribute("href")), title: text(link), artist: text(singer?.querySelector("a")) }));
+        rows.push(row({ url, title: text(link), artist: text(singer?.querySelector("a")) }));
       }
       return rows;
     }
@@ -190,28 +202,85 @@
       for (const link of Array.from(doc.querySelectorAll("li a[href^='/web/search/song/']"))) {
         const title = link.querySelector("p");
         if (!title) continue;
-        rows.push(row({ url: abs(origin, link.getAttribute("href")), title: text(title), artist: text(title.parentElement?.nextElementSibling) }));
+        const url = abs(origin, link.getAttribute("href"));
+        if (!url) continue;
+        rows.push(row({ url, title: text(title), artist: text(title.parentElement?.nextElementSibling) }));
       }
       return rows;
     }
   };
 
+  // scripts/musicbrainz-work-lyrics-search/src/sites/shift-jis.ts
+  var table = null;
+  function buildTable() {
+    const decoder = new TextDecoder("shift_jis");
+    const map = /* @__PURE__ */ new Map();
+    const setIfNew = (ch, bytes) => {
+      if (ch && ch !== "�" && !map.has(ch)) map.set(ch, bytes);
+    };
+    for (let b = 0; b <= 127; b++) setIfNew(decoder.decode(new Uint8Array([b])), [b]);
+    for (let b = 161; b <= 223; b++) setIfNew(decoder.decode(new Uint8Array([b])), [b]);
+    for (let lead = 129; lead <= 252; lead++) {
+      if (!(lead >= 129 && lead <= 159 || lead >= 224 && lead <= 252)) continue;
+      for (let trail = 64; trail <= 252; trail++) {
+        if (!(trail >= 64 && trail <= 126 || trail >= 128 && trail <= 252)) continue;
+        const decoded = decoder.decode(new Uint8Array([lead, trail]));
+        if (decoded.length !== 1 && decoded.length !== 2) continue;
+        setIfNew(decoded, [lead, trail]);
+      }
+    }
+    return map;
+  }
+  function toPercentByte(b) {
+    return `%${b.toString(16).toUpperCase().padStart(2, "0")}`;
+  }
+  function shiftJisEncode(value) {
+    if (!table) table = buildTable();
+    let out = "";
+    for (const ch of value) {
+      const bytes = table.get(ch) ?? [63];
+      for (const b of bytes) out += toPercentByte(b);
+    }
+    return out;
+  }
+
   // scripts/musicbrainz-work-lyrics-search/src/sites/kashinavi.ts
+  var RESULT_HEADERS = ["曲名", "歌手名", "歌い出し", "ミニ情報"];
+  function stripHeaderPrefix(s) {
+    return s.replace(/^[-\s]*◆\s*/, "");
+  }
+  function findResultTable(doc) {
+    for (const table2 of Array.from(doc.querySelectorAll("table"))) {
+      const headerRow = table2.querySelector("tr");
+      if (!headerRow) continue;
+      const headers = Array.from(headerRow.querySelectorAll(":scope > td")).map((td) => stripHeaderPrefix(text(td)));
+      if (RESULT_HEADERS.every((h) => headers.includes(h))) return table2;
+    }
+    return null;
+  }
   var kashinavi = {
     id: "kashinavi",
     name: "歌詞ナビ",
     origin: "https://kashinavi.com",
     charset: "shift_jis",
     buildUrl(q) {
-      return withParams("https://kashinavi.com/search.php", { kyoku: q.title, kashu: q.artist, sakushi: q.lyricist, sakkyoku: q.composer, start: "1" });
+      return withParams(
+        "https://kashinavi.com/search.php",
+        { kyoku: q.title, kashu: q.artist, sakushi: q.lyricist, sakkyoku: q.composer, start: "1" },
+        shiftJisEncode
+      );
     },
     parse(doc, origin) {
+      const table2 = findResultTable(doc);
+      if (!table2) return [];
       const rows = [];
-      for (const tr of Array.from(doc.querySelectorAll("table tr"))) {
+      for (const tr of Array.from(table2.querySelectorAll("tr"))) {
         const cells = tr.querySelectorAll(":scope > td");
         const link = cells[1]?.querySelector("a[href*='/lyrics/']");
         if (!link) continue;
-        rows.push(row({ url: abs(origin, link.getAttribute("href")), title: text(link), artist: text(cells[2]?.querySelector("a")) }));
+        const url = abs(origin, link.getAttribute("href"));
+        if (!url) continue;
+        rows.push(row({ url, title: text(link), artist: text(cells[2]?.querySelector("a")) }));
       }
       return rows;
     }
@@ -231,7 +300,9 @@
         const link = title.closest("a");
         const cell = title.closest("td");
         if (!link || !cell) continue;
-        rows.push(row({ url: abs(origin, link.getAttribute("href")), title: text(title), artist: text(cell.querySelector(".lyrics-list-artist")) }));
+        const url = abs(origin, link.getAttribute("href"));
+        if (!url) continue;
+        rows.push(row({ url, title: text(title), artist: text(cell.querySelector(".lyrics-list-artist")) }));
       }
       return rows;
     }
@@ -251,10 +322,12 @@
         const title = tr.querySelector(".songlist-title");
         const link = tr.querySelector("td a");
         if (!title || !link) continue;
+        const url = abs(origin, link.getAttribute("href"));
+        if (!url) continue;
         const cells = tr.querySelectorAll("td");
         rows.push(
           row({
-            url: abs(origin, link.getAttribute("href")),
+            url,
             title: text(title),
             artist: text(cells[1]),
             lyricist: text(cells[2]),
@@ -284,10 +357,12 @@
       for (const tr of Array.from(doc.querySelectorAll("table.searchResult tr"))) {
         const link = tr.querySelector(".searchResult__title a");
         if (!link) continue;
+        const url = abs(origin, link.getAttribute("href"));
+        if (!url) continue;
         const writersCell = tr.querySelector(".searchResult__lyricist");
         rows.push(
           row({
-            url: abs(origin, link.getAttribute("href")),
+            url,
             title: text(link),
             artist: text(tr.querySelector(".searchResult__artist > p a")),
             lyricist: writers(writersCell, "作詞"),

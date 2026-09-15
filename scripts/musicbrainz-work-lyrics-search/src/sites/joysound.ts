@@ -13,7 +13,9 @@ export const joysound: Site = {
     for (const link of Array.from(doc.querySelectorAll("li a[href^='/web/search/song/']"))) {
       const title = link.querySelector("p");
       if (!title) continue;
-      rows.push(row({ url: abs(origin, link.getAttribute("href")), title: text(title), artist: text(title.parentElement?.nextElementSibling) }));
+      const url = abs(origin, link.getAttribute("href"));
+      if (!url) continue;
+      rows.push(row({ url, title: text(title), artist: text(title.parentElement?.nextElementSibling) }));
     }
     return rows;
   },
