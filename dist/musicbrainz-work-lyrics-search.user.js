@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MusicBrainz work lyrics search
 // @namespace    https://github.com/ibmibmibm/userscripts
-// @version      1.0.0
+// @version      1.0.1
 // @description  Search Japanese lyrics sites from a MusicBrainz work edit page and add the lyrics page to the external links
 // @author       Shen-Ta Hsieh
 // @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/musicbrainz-work-lyrics-search.user.js
@@ -22,13 +22,17 @@
 "use strict";
 (() => {
   // scripts/musicbrainz-work-lyrics-search/src/fetch.ts
-  function gmFetchText(url, charset, request) {
+  function gmFetchText(url, charset, request, emptyStatus) {
     return new Promise((resolve, reject) => {
       const details = {
         method: "GET",
         url,
         timeout: 15e3,
-        onload: (r) => r.status >= 200 && r.status < 300 ? resolve(r.responseText) : reject(new Error(`HTTP ${r.status}`)),
+        onload: (r) => {
+          if (r.status >= 200 && r.status < 300) resolve(r.responseText);
+          else if (r.status === emptyStatus) resolve("");
+          else reject(new Error(`HTTP ${r.status}`));
+        },
         onerror: () => reject(new Error("Request failed")),
         ontimeout: () => reject(new Error("Timed out"))
       };
@@ -313,6 +317,7 @@
     id: "uta-net",
     name: "歌ネット",
     origin: "https://www.uta-net.com",
+    emptyStatus: 404,
     buildUrl(q) {
       return withParams("https://www.uta-net.com/search/", { target: "songtitle", type: "in", Keyword: q.title });
     },
@@ -548,7 +553,7 @@
       view.status.textContent = "Searching…";
       view.rows.replaceChildren();
       try {
-        const text2 = await deps.fetchText(view.site.buildUrl(q), view.site.charset);
+        const text2 = await deps.fetchText(view.site.buildUrl(q), view.site.charset, view.site.emptyStatus);
         if (seq !== view.seq) return;
         const parsed = new doc.defaultView.DOMParser().parseFromString(text2, "text/html");
         const rows = view.site.parse(parsed, view.site.origin);
@@ -592,7 +597,7 @@
   }
 
   // scripts/musicbrainz-work-lyrics-search/src/main.ts
-  var VERSION = true ? "1.0.0" : "dev";
+  var VERSION = true ? "1.0.1" : "dev";
   var NAME_INPUT = "#id-edit-work\\.name";
   function pageInfo(doc, href) {
     let path;
@@ -617,7 +622,7 @@
     const deps = {
       version: VERSION,
       sites: SITES,
-      fetchText: (url, charset) => gmFetchText(url, charset, GM_xmlhttpRequest),
+      fetchText: (url, charset, emptyStatus) => gmFetchText(url, charset, GM_xmlhttpRequest, emptyStatus),
       lookupPeople: (mbid) => lookupWorkPeople(mbid, (url) => fetchJson(url)),
       hasLink: (url) => hasLink(document, url),
       addLink: (url) => addLink(document, url)

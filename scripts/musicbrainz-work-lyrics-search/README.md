@@ -29,5 +29,6 @@ Run `npm test` and `node build.mjs musicbrainz-work-lyrics-search` from the repo
 `test/fixtures/` are fragments of real search result pages captured on 2026-09-15 and MusicBrainz web service responses.
 Bump `@version` in `header.txt` before a release.
 
-Each site is one module in `src/sites/`. When a site changes its page structure, its status shows "No results parsed";
+Each site is one module in `src/sites/`. 歌ネット answers a search with no hits with HTTP 404, which the module declares
+as `emptyStatus`. When a site changes its page structure, its status shows "No results parsed";
 update that module's `parse` and its fixture.

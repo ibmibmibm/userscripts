@@ -18,6 +18,8 @@ describe("gmFetchText", () => {
 
   it("rejects on HTTP errors, network errors, and timeouts", async () => {
     await expect(gmFetchText("u", undefined, (d) => d.onload({ status: 503, responseText: "" }))).rejects.toThrow("HTTP 503");
+    await expect(gmFetchText("u", undefined, (d) => d.onload({ status: 404, responseText: "<p>none</p>" }))).rejects.toThrow("HTTP 404");
+    await expect(gmFetchText("u", undefined, (d) => d.onload({ status: 404, responseText: "<p>none</p>" }), 404)).resolves.toBe("");
     await expect(gmFetchText("u", undefined, (d) => d.onerror())).rejects.toThrow("Request failed");
     await expect(gmFetchText("u", undefined, (d) => d.ontimeout())).rejects.toThrow("Timed out");
   });

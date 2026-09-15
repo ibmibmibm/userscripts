@@ -136,6 +136,19 @@ describe("enhancePage", () => {
     expect(q(siteB2, "site-status").textContent).toBe("No results");
   });
 
+  it("passes the site's charset and emptyStatus to fetchText and shows No results for an empty body", async () => {
+    const doc = editDocument();
+    const args: unknown[][] = [];
+    const siteC: Site = { ...siteA, id: "c", name: "Site C", charset: "shift_jis", emptyStatus: 404 };
+    const { d } = deps({ sites: [siteC], fetchText: async (...a) => ((args.push(a), "")) });
+    const panel = enhancePage(doc, editInfo, d)!;
+    await settle();
+    q<HTMLButtonElement>(panel, "search").click();
+    await settle();
+    expect(args).toEqual([["https://a.invalid/s?t=Lemon&ar=%E7%B1%B3%E6%B4%A5%E7%8E%84%E5%B8%AB", "shift_jis", 404]]);
+    expect(q(panel, "site-status").textContent).toBe("No results");
+  });
+
   it("says No results parsed for a long page without rows and ignores clicks while searching", async () => {
     const doc = editDocument();
     let count = 0;

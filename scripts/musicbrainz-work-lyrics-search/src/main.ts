@@ -38,7 +38,7 @@ function start(): void {
   const deps: UiDeps = {
     version: VERSION,
     sites: SITES,
-    fetchText: (url, charset) => gmFetchText(url, charset, GM_xmlhttpRequest),
+    fetchText: (url, charset, emptyStatus) => gmFetchText(url, charset, GM_xmlhttpRequest, emptyStatus),
     lookupPeople: (mbid) => lookupWorkPeople(mbid, (url) => fetchJson(url)),
     hasLink: (url) => hasLink(document, url),
     addLink: (url) => addLink(document, url),

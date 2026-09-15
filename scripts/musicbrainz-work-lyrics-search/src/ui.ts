@@ -8,7 +8,7 @@ export interface UiDeps {
   version: string;
   sites: Site[];
   /** GET a lyrics site page through the userscript manager. */
-  fetchText: (url: string, charset?: string) => Promise<string>;
+  fetchText: (url: string, charset?: string, emptyStatus?: number) => Promise<string>;
   lookupPeople: (mbid: string) => Promise<WorkPeople>;
   /** True when the external links editor already holds the URL. */
   hasLink: (url: string) => boolean;
@@ -155,7 +155,7 @@ export function enhancePage(doc: Document, info: PageInfo, deps: UiDeps): HTMLEl
     view.status.textContent = "Searching…";
     view.rows.replaceChildren();
     try {
-      const text = await deps.fetchText(view.site.buildUrl(q), view.site.charset);
+      const text = await deps.fetchText(view.site.buildUrl(q), view.site.charset, view.site.emptyStatus);
       if (seq !== view.seq) return;
       const parsed = new (doc.defaultView as Window & typeof globalThis).DOMParser().parseFromString(text, "text/html");
       const rows = view.site.parse(parsed, view.site.origin);

@@ -52,7 +52,8 @@ describe("utaten", () => {
 });
 
 describe("uta-net", () => {
-  it("sends the title only", () => {
+  it("sends the title only and treats HTTP 404 as no hits", () => {
+    expect(utaNet.emptyStatus).toBe(404);
     expect(utaNet.buildUrl(full)).toBe("https://www.uta-net.com/search/?target=songtitle&type=in&Keyword=Lemon");
   });
 

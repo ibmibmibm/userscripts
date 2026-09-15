@@ -23,6 +23,7 @@ export interface Site {
   name: string; // "J-Lyric"
   origin: string; // "https://j-lyric.net"
   charset?: string; // "shift_jis" for pages that are not UTF-8
+  emptyStatus?: number; // HTTP status the site answers when a search has no hits (uta-net: 404)
   buildUrl(q: Query): string;
   parse(doc: Document, origin: string): Row[];
 }

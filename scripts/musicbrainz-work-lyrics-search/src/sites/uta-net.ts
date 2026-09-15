@@ -5,6 +5,7 @@ export const utaNet: Site = {
   id: "uta-net",
   name: "歌ネット",
   origin: "https://www.uta-net.com",
+  emptyStatus: 404,
   buildUrl(q: Query): string {
     return withParams("https://www.uta-net.com/search/", { target: "songtitle", type: "in", Keyword: q.title });
   },
