@@ -85,11 +85,30 @@ describe("enhancePage", () => {
     expect(q(panel, "status").textContent).toBe("");
   });
 
-  it("reports a failed lookup and does no lookup on the create page", async () => {
+  it("reports a failed lookup with a Retry lookup button and does no lookup on the create page", async () => {
     const doc = editDocument();
-    const panel = enhancePage(doc, editInfo, deps({ lookupPeople: async () => { throw new Error("HTTP 503"); } }).d)!;
+    let fail = true;
+    const { d } = deps({
+      lookupPeople: async () => {
+        if (fail) throw new Error("HTTP 503");
+        return { artist: "A", lyricist: "L", composer: "C" };
+      },
+    });
+    const panel = enhancePage(doc, editInfo, d)!;
+    expect(q<HTMLButtonElement>(panel, "lookup-retry").hidden).toBe(true);
     await settle();
     expect(q(panel, "status").textContent).toBe("MusicBrainz lookup failed: HTTP 503");
+    expect(q<HTMLButtonElement>(panel, "lookup-retry").hidden).toBe(false);
+    fail = false;
+    q<HTMLInputElement>(panel, "artist").value = "typed";
+    q<HTMLButtonElement>(panel, "lookup-retry").click();
+    expect(q(panel, "status").textContent).toBe("Looking up MusicBrainz…");
+    expect(q<HTMLButtonElement>(panel, "lookup-retry").hidden).toBe(true);
+    await settle();
+    expect(q(panel, "status").textContent).toBe("");
+    expect(q<HTMLInputElement>(panel, "artist").value).toBe("typed");
+    expect(q<HTMLInputElement>(panel, "lyricist").value).toBe("L");
+    expect(q<HTMLInputElement>(panel, "composer").value).toBe("C");
     let called = false;
     const panel2 = enhancePage(createDocument(), createInfo, deps({ lookupPeople: async () => ((called = true), { artist: "", lyricist: "", composer: "" }) }).d)!;
     await settle();

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MusicBrainz work lyrics search
 // @namespace    https://github.com/ibmibmibm/userscripts
-// @version      1.0.1
+// @version      1.0.2
 // @description  Search Japanese lyrics sites from a MusicBrainz work edit page and add the lyrics page to the external links
 // @author       Shen-Ta Hsieh
 // @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/musicbrainz-work-lyrics-search.user.js
@@ -468,7 +468,11 @@
     musixmatch.style.marginLeft = "8px";
     const status = el(doc, "span", "status");
     status.style.marginLeft = "8px";
-    controls.append(search, musixmatch, status);
+    const lookupRetry = el(doc, "button", "lookup-retry", "Retry lookup");
+    lookupRetry.type = "button";
+    lookupRetry.hidden = true;
+    lookupRetry.style.marginLeft = "8px";
+    controls.append(search, musixmatch, status, lookupRetry);
     panel.appendChild(controls);
     const query = () => ({
       title: inputs.title.value.trim(),
@@ -580,24 +584,32 @@
         searching = false;
       }
     });
-    if (info.mbid) {
+    async function lookup(mbid) {
+      lookupRetry.hidden = true;
       status.textContent = "Looking up MusicBrainz…";
-      deps.lookupPeople(info.mbid).then((people) => {
+      try {
+        const people = await deps.lookupPeople(mbid);
         for (const f of ["artist", "lyricist", "composer"]) {
           if (!inputs[f].value) inputs[f].value = people[f];
         }
         status.textContent = "";
         updateMusixmatch();
-      }).catch((e) => {
-        status.textContent = `MusicBrainz lookup failed: ${e.message}`;
-      });
+      } catch (e) {
+        status.textContent = `MusicBrainz lookup failed: ${e instanceof Error ? e.message : String(e)}`;
+        lookupRetry.hidden = false;
+      }
+    }
+    if (info.mbid) {
+      const mbid = info.mbid;
+      lookupRetry.addEventListener("click", () => void lookup(mbid));
+      void lookup(mbid);
     }
     anchor.after(panel);
     return panel;
   }
 
   // scripts/musicbrainz-work-lyrics-search/src/main.ts
-  var VERSION = true ? "1.0.1" : "dev";
+  var VERSION = true ? "1.0.2" : "dev";
   var NAME_INPUT = "#id-edit-work\\.name";
   function pageInfo(doc, href) {
     let path;

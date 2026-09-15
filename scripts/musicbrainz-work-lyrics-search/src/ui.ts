@@ -66,7 +66,11 @@ export function enhancePage(doc: Document, info: PageInfo, deps: UiDeps): HTMLEl
   musixmatch.style.marginLeft = "8px";
   const status = el(doc, "span", "status");
   status.style.marginLeft = "8px";
-  controls.append(search, musixmatch, status);
+  const lookupRetry = el(doc, "button", "lookup-retry", "Retry lookup");
+  lookupRetry.type = "button";
+  lookupRetry.hidden = true;
+  lookupRetry.style.marginLeft = "8px";
+  controls.append(search, musixmatch, status, lookupRetry);
   panel.appendChild(controls);
 
   const query = (): Query => ({
@@ -184,20 +188,27 @@ export function enhancePage(doc: Document, info: PageInfo, deps: UiDeps): HTMLEl
     }
   });
 
-  if (info.mbid) {
+  /** Fills the empty people fields from the web service; on failure offers a retry. */
+  async function lookup(mbid: string): Promise<void> {
+    lookupRetry.hidden = true;
     status.textContent = "Looking up MusicBrainz…";
-    deps
-      .lookupPeople(info.mbid)
-      .then((people) => {
-        for (const f of ["artist", "lyricist", "composer"] as const) {
-          if (!inputs[f].value) inputs[f].value = people[f];
-        }
-        status.textContent = "";
-        updateMusixmatch();
-      })
-      .catch((e: Error) => {
-        status.textContent = `MusicBrainz lookup failed: ${e.message}`;
-      });
+    try {
+      const people = await deps.lookupPeople(mbid);
+      for (const f of ["artist", "lyricist", "composer"] as const) {
+        if (!inputs[f].value) inputs[f].value = people[f];
+      }
+      status.textContent = "";
+      updateMusixmatch();
+    } catch (e) {
+      status.textContent = `MusicBrainz lookup failed: ${e instanceof Error ? e.message : String(e)}`;
+      lookupRetry.hidden = false;
+    }
+  }
+
+  if (info.mbid) {
+    const mbid = info.mbid;
+    lookupRetry.addEventListener("click", () => void lookup(mbid));
+    void lookup(mbid);
   }
 
   anchor.after(panel);

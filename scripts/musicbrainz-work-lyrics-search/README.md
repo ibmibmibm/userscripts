@@ -15,7 +15,8 @@ Musixmatch gets a plain search link because its search needs a login.
 ## Use
 
 1. Open a work edit page. The title comes from the name field. On an edit page the lyricist and composer come from the
-   work's relationships and the artist from the work's recordings, through the MusicBrainz web service.
+   work's relationships and the artist from the work's recordings, through the MusicBrainz web service. If that lookup
+   fails (the web service answers HTTP 503 when it is busy), click "Retry lookup".
 2. Change any field and click "Search lyrics". Every site is searched by title. UtaTen and 歌詞ナビ also receive the
    artist, lyricist, and composer, and J-Lyric and プチリリ also receive the artist.
 3. Rows with more matching fields come first. Matching fields are bold. Click a row to open the page in a new tab.
