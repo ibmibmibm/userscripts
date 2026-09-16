@@ -82,7 +82,7 @@ describe("kashinavi", () => {
     expect(kashinavi.buildUrl(titleJapanese)).toBe("https://kashinavi.com/search.php?kyoku=%83%8C%83%82%83%93&start=%31");
   });
 
-  it("parses title and artist rows from the result table", () => {
+  it("parses title and artist rows from the result table, whose header row sits below the count row", () => {
     const rows = kashinavi.parse(siteDocument("kashinavi-search", "https://kashinavi.com/search.php?kyoku=Lemon&start=1"), kashinavi.origin);
     expect(rows.length).toBe(6);
     expect(rows[0]).toEqual({ url: "https://kashinavi.com/lyrics/159368/", title: "Lime & Lemon", artist: "東方神起", lyricist: "", composer: "" });
@@ -96,6 +96,19 @@ describe("kashinavi", () => {
       kashinavi.origin,
     );
     expect(rows).toEqual([]);
+  });
+
+  it("ignores the rows of a table nested in the result table", () => {
+    const html = `<table>
+      <tr><td colspan=5>「Lemon」の検索結果該当件数1件</td></tr>
+      <tr><td></td><td>- - - ◆　曲名</td><td>- - - ◆　歌手名</td><td>- - - ◆　歌い出し</td><td>- - - ◆　ミニ情報</td></tr>
+      <tr><td></td><td><a href="/lyrics/1/">Good</a></td><td><a href="/artist/1">Artist</a></td><td></td><td></td></tr>
+      <tr><td colspan=5><table><tr><td></td><td><a href="/lyrics/2/">Advert</a></td><td></td><td></td><td></td></tr></table></td></tr>
+    </table>`;
+    const doc = new JSDOM(html).window.document;
+    expect(kashinavi.parse(doc, kashinavi.origin)).toEqual([
+      { url: "https://kashinavi.com/lyrics/1/", title: "Good", artist: "Artist", lyricist: "", composer: "" },
+    ]);
   });
 
   it("drops a row whose link uses a javascript: scheme", () => {

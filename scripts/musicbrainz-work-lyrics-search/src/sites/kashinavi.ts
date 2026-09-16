@@ -9,13 +9,23 @@ function stripHeaderPrefix(s: string): string {
   return s.replace(/^[-\s]*◆\s*/, "");
 }
 
-/** The one table (among ads, forms, and the "new songs" list) that holds results. */
+/** The rows of this table, without the rows of tables nested inside it. */
+function ownRows(table: Element): Element[] {
+  return Array.from(table.querySelectorAll(":scope > tr, :scope > thead > tr, :scope > tbody > tr"));
+}
+
+function isHeaderRow(tr: Element): boolean {
+  const headers = Array.from(tr.querySelectorAll(":scope > td")).map((td) => stripHeaderPrefix(text(td)));
+  return RESULT_HEADERS.every((h) => headers.includes(h));
+}
+
+/**
+ * The one table (among ads, forms, and the "new songs" list) that holds results. A search with hits
+ * puts a count row ("該当件数1件") above the header row, so every row of the table is a candidate.
+ */
 function findResultTable(doc: Document): Element | null {
   for (const table of Array.from(doc.querySelectorAll("table"))) {
-    const headerRow = table.querySelector("tr");
-    if (!headerRow) continue;
-    const headers = Array.from(headerRow.querySelectorAll(":scope > td")).map((td) => stripHeaderPrefix(text(td)));
-    if (RESULT_HEADERS.every((h) => headers.includes(h))) return table;
+    if (ownRows(table).some(isHeaderRow)) return table;
   }
   return null;
 }
@@ -36,7 +46,7 @@ export const kashinavi: Site = {
     const table = findResultTable(doc);
     if (!table) return [];
     const rows: Row[] = [];
-    for (const tr of Array.from(table.querySelectorAll("tr"))) {
+    for (const tr of ownRows(table)) {
       const cells = tr.querySelectorAll(":scope > td");
       const link = cells[1]?.querySelector("a[href*='/lyrics/']");
       if (!link) continue;

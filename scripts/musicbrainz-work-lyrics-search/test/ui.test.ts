@@ -130,6 +130,18 @@ describe("enhancePage", () => {
     expect(link.href).toBe("https://www.musixmatch.com/search?query=Lemon");
   });
 
+  it("leaves an artist field with alternatives out of the site query and the Musixmatch link, but still ranks with it", async () => {
+    const doc = editDocument();
+    const { d, fetched } = deps({ lookupPeople: async () => ({ artist: "aespa / 米津玄師", lyricist: "", composer: "" }) });
+    const panel = enhancePage(doc, editInfo, d)!;
+    await settle();
+    expect(q<HTMLAnchorElement>(panel, "musixmatch").href).toBe("https://www.musixmatch.com/search?query=Lemon");
+    q<HTMLButtonElement>(panel, "search").click();
+    await settle();
+    expect(fetched[0]).toBe("https://a.invalid/s?t=Lemon&ar=");
+    expect(qa(panel, "hit").map((b) => b.textContent)).toEqual(["Lemon", "米津玄師", "aespa", "Lemon"]);
+  });
+
   it("searches every site with the current fields, ranks rows, and marks matched fields", async () => {
     const doc = editDocument();
     const { d, fetched } = deps();

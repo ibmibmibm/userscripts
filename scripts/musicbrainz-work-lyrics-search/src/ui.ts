@@ -1,3 +1,4 @@
+import { searchQuery } from "./query";
 import { rankRows } from "./rank";
 import { MUSIXMATCH_SEARCH } from "./sites";
 import { FIELDS, type Field, type PageInfo, type Query, type ScoredRow, type Site, type WorkPeople } from "./types";
@@ -80,7 +81,7 @@ export function enhancePage(doc: Document, info: PageInfo, deps: UiDeps): HTMLEl
     composer: inputs.composer.value.trim(),
   });
   const updateMusixmatch = () => {
-    const q = query();
+    const q = searchQuery(query());
     musixmatch.href = `${MUSIXMATCH_SEARCH}?query=${encodeURIComponent([q.title, q.artist].filter(Boolean).join(" "))}`;
   };
   inputs.title.addEventListener("input", updateMusixmatch);
@@ -159,7 +160,7 @@ export function enhancePage(doc: Document, info: PageInfo, deps: UiDeps): HTMLEl
     view.status.textContent = "Searching…";
     view.rows.replaceChildren();
     try {
-      const text = await deps.fetchText(view.site.buildUrl(q), view.site.charset, view.site.emptyStatus);
+      const text = await deps.fetchText(view.site.buildUrl(searchQuery(q)), view.site.charset, view.site.emptyStatus);
       if (seq !== view.seq) return;
       const parsed = new (doc.defaultView as Window & typeof globalThis).DOMParser().parseFromString(text, "text/html");
       const rows = view.site.parse(parsed, view.site.origin);

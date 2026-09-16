@@ -18,7 +18,10 @@ Musixmatch gets a plain search link because its search needs a login.
    work's relationships and the artist from the work's recordings, through the MusicBrainz web service. If that lookup
    fails (the web service answers HTTP 503 when it is busy), click "Retry lookup".
 2. Change any field and click "Search lyrics". Every site is searched by title. UtaTen and 歌詞ナビ also receive the
-   artist, lyricist, and composer, and J-Lyric and プチリリ also receive the artist.
+   artist, lyricist, and composer, and J-Lyric and プチリリ also receive the artist. A field that holds several names
+   separated by " / " (a work with three artist credits, for example) goes to no site, because the sites join the words
+   of a field with AND and find nothing. The field still ranks the results. To search for one of the names, delete
+   the others.
 3. Rows with more matching fields come first. Matching fields are bold. Click a row to open the page in a new tab.
 4. Click "Add" to put the URL into the external links editor. MusicBrainz sets the relationship type to "lyrics page".
    Rows already in the editor show "added".
@@ -31,5 +34,6 @@ Run `npm test` and `node build.mjs musicbrainz-work-lyrics-search` from the repo
 Bump `@version` in `header.txt` before a release.
 
 Each site is one module in `src/sites/`. 歌ネット answers a search with no hits with HTTP 404, which the module declares
-as `emptyStatus`. When a site changes its page structure, its status shows "No results parsed";
+as `emptyStatus`. 歌詞ナビ has no class names, so its module finds the result table by its header row, which sits below
+a count row. When a site changes its page structure, its status shows "No results parsed";
 update that module's `parse` and its fixture.

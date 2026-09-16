@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MusicBrainz work lyrics search
 // @namespace    https://github.com/ibmibmibm/userscripts
-// @version      1.0.2
+// @version      1.0.3
 // @description  Search Japanese lyrics sites from a MusicBrainz work edit page and add the lyrics page to the external links
 // @author       Shen-Ta Hsieh
 // @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/musicbrainz-work-lyrics-search.user.js
@@ -253,12 +253,16 @@
   function stripHeaderPrefix(s) {
     return s.replace(/^[-\s]*◆\s*/, "");
   }
+  function ownRows(table2) {
+    return Array.from(table2.querySelectorAll(":scope > tr, :scope > thead > tr, :scope > tbody > tr"));
+  }
+  function isHeaderRow(tr) {
+    const headers = Array.from(tr.querySelectorAll(":scope > td")).map((td) => stripHeaderPrefix(text(td)));
+    return RESULT_HEADERS.every((h) => headers.includes(h));
+  }
   function findResultTable(doc) {
     for (const table2 of Array.from(doc.querySelectorAll("table"))) {
-      const headerRow = table2.querySelector("tr");
-      if (!headerRow) continue;
-      const headers = Array.from(headerRow.querySelectorAll(":scope > td")).map((td) => stripHeaderPrefix(text(td)));
-      if (RESULT_HEADERS.every((h) => headers.includes(h))) return table2;
+      if (ownRows(table2).some(isHeaderRow)) return table2;
     }
     return null;
   }
@@ -278,7 +282,7 @@
       const table2 = findResultTable(doc);
       if (!table2) return [];
       const rows = [];
-      for (const tr of Array.from(table2.querySelectorAll("tr"))) {
+      for (const tr of ownRows(table2)) {
         const cells = tr.querySelectorAll(":scope > td");
         const link = cells[1]?.querySelector("a[href*='/lyrics/']");
         if (!link) continue;
@@ -416,6 +420,15 @@
   // scripts/musicbrainz-work-lyrics-search/src/types.ts
   var FIELDS = ["title", "artist", "lyricist", "composer"];
 
+  // scripts/musicbrainz-work-lyrics-search/src/query.ts
+  function searchQuery(q) {
+    const out = { ...q };
+    for (const f of FIELDS) {
+      if (f !== "title" && splitNames(q[f]).length > 1) out[f] = "";
+    }
+    return out;
+  }
+
   // scripts/musicbrainz-work-lyrics-search/src/rank.ts
   function fieldMatches(field, query, value) {
     if (!query.trim() || !value.trim()) return false;
@@ -481,7 +494,7 @@
       composer: inputs.composer.value.trim()
     });
     const updateMusixmatch = () => {
-      const q = query();
+      const q = searchQuery(query());
       musixmatch.href = `${MUSIXMATCH_SEARCH}?query=${encodeURIComponent([q.title, q.artist].filter(Boolean).join(" "))}`;
     };
     inputs.title.addEventListener("input", updateMusixmatch);
@@ -557,7 +570,7 @@
       view.status.textContent = "Searching…";
       view.rows.replaceChildren();
       try {
-        const text2 = await deps.fetchText(view.site.buildUrl(q), view.site.charset, view.site.emptyStatus);
+        const text2 = await deps.fetchText(view.site.buildUrl(searchQuery(q)), view.site.charset, view.site.emptyStatus);
         if (seq !== view.seq) return;
         const parsed = new doc.defaultView.DOMParser().parseFromString(text2, "text/html");
         const rows = view.site.parse(parsed, view.site.origin);
@@ -609,7 +622,7 @@
   }
 
   // scripts/musicbrainz-work-lyrics-search/src/main.ts
-  var VERSION = true ? "1.0.2" : "dev";
+  var VERSION = true ? "1.0.3" : "dev";
   var NAME_INPUT = "#id-edit-work\\.name";
   function pageInfo(doc, href) {
     let path;
