@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MusicBrainz work lyrics search
 // @namespace    https://github.com/ibmibmibm/userscripts
-// @version      1.0.4
+// @version      1.0.5
 // @description  Search Japanese lyrics sites from a MusicBrainz work edit page and add the lyrics page to the external links
 // @author       Shen-Ta Hsieh
 // @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/musicbrainz-work-lyrics-search.user.js

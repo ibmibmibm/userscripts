@@ -16,6 +16,19 @@ function reactLikeEditor(doc: Document): void {
   });
 }
 
+/** MusicBrainz also cleans the URL on focus out and replaces the input with the link. */
+function committingEditor(doc: Document, clean: (url: string) => string = (u) => u): void {
+  reactLikeEditor(doc);
+  doc.querySelector("#external-links-editor")!.addEventListener("focusout", (e) => {
+    const input = e.target as HTMLInputElement;
+    if (!input.value) return;
+    const a = doc.createElement("a");
+    a.className = "url";
+    a.setAttribute("href", clean(input.value));
+    input.replaceWith(a);
+  });
+}
+
 describe("existingLinks", () => {
   it("collects link hrefs and non-empty url inputs, without trailing slashes", () => {
     const doc = editDocument();
@@ -38,6 +51,25 @@ describe("addLink", () => {
     expect(hasLink(doc, NEW)).toBe(true);
   });
 
+  it("fires focus out, so an editor that turns the input into a link takes the URL", async () => {
+    const doc = editDocument();
+    committingEditor(doc);
+    await expect(addLink(doc, NEW, async () => {})).resolves.toBe(true);
+    const hrefs = Array.from(doc.querySelectorAll("#external-links-editor a.url")).map((a) => a.getAttribute("href"));
+    expect(hrefs).toContain(NEW);
+    const inputs = Array.from(doc.querySelectorAll<HTMLInputElement>("#external-links-editor input[type=url]")).map((i) => i.value);
+    expect(inputs).toEqual([""]);
+    expect(hasLink(doc, NEW)).toBe(true);
+  });
+
+  it("counts a link the editor cleaned into another form as taken", async () => {
+    const doc = editDocument();
+    committingEditor(doc, (url) => url.replace("https://utaten.com/lyric/", "https://utaten.com/lyric/x/"));
+    await expect(addLink(doc, NEW, async () => {})).resolves.toBe(true);
+    expect(hasLink(doc, NEW)).toBe(false);
+    expect(hasLink(doc, "https://utaten.com/lyric/x/sa18020902/")).toBe(true);
+  });
+
   it("resolves false when the editor does not react or is missing", async () => {
     let waited = 0;
     await expect(addLink(editDocument(), NEW, async () => void waited++)).resolves.toBe(false);
@@ -47,7 +79,7 @@ describe("addLink", () => {
 
   it("works on the create page fixture", async () => {
     const doc = createDocument();
-    reactLikeEditor(doc);
+    committingEditor(doc);
     await expect(addLink(doc, NEW, async () => {})).resolves.toBe(true);
   });
 });

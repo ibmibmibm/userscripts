@@ -69,6 +69,24 @@ describe("enhancePage", () => {
     expect(enhancePage(doc2, editInfo, deps().d)).toBeNull();
   });
 
+  it("gives each field a row of its own: a label bound to its input, sized by the panel stylesheet", () => {
+    const doc = editDocument();
+    const panel = enhancePage(doc, editInfo, deps().d)!;
+    const style = panel.querySelector("style")!;
+    expect(panel.firstElementChild!.tagName).toBe("LEGEND");
+    expect(style.textContent).toContain(`fieldset.${MARKER} .${MARKER}-fields`);
+    expect(style.textContent).toContain("display: grid");
+    const fields = Array.from(q(panel, "fields").children);
+    expect(fields.map((e) => e.tagName)).toEqual(["LABEL", "INPUT", "LABEL", "INPUT", "LABEL", "INPUT", "LABEL", "INPUT"]);
+    expect(fields.filter((e) => e.tagName === "LABEL").map((e) => e.textContent)).toEqual(["Title:", "Artist:", "Lyricist:", "Composer:"]);
+    for (let i = 0; i < fields.length; i += 2) {
+      const id = (fields[i] as HTMLLabelElement).htmlFor;
+      expect(id).toBe((fields[i + 1] as HTMLInputElement).id);
+      expect(doc.getElementById(id)).toBe(fields[i + 1]);
+    }
+    expect(panel.querySelectorAll("[style]").length).toBe(0);
+  });
+
   it("prefills the title at once and the people after the lookup, without overwriting typed text", async () => {
     const doc = editDocument();
     let resolvePeople: (p: { artist: string; lyricist: string; composer: string }) => void = () => {};

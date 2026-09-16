@@ -19,6 +19,59 @@ export interface UiDeps {
 
 const LABELS: Record<Field, string> = { title: "Title", artist: "Artist", lyricist: "Lyricist", composer: "Composer" };
 
+/**
+ * The panel brings its own styles instead of borrowing the MusicBrainz form styles, which give a
+ * text input a fixed width wide enough to push the next label onto the line of the previous input.
+ * Every rule names the panel class, so it wins over the page styles without !important.
+ */
+const STYLE = `
+fieldset.${MARKER} .${MARKER}-fields {
+  display: grid;
+  grid-template-columns: max-content minmax(8em, 28em);
+  gap: 4px 8px;
+  align-items: center;
+  margin: 4px 0 6px;
+}
+fieldset.${MARKER} .${MARKER}-fields > label {
+  display: block;
+  float: none;
+  clear: none;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  text-align: right;
+  font-weight: normal;
+}
+fieldset.${MARKER} .${MARKER}-fields > input {
+  display: block;
+  float: none;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+fieldset.${MARKER} .${MARKER}-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+fieldset.${MARKER} .${MARKER}-site {
+  margin-top: 6px;
+}
+fieldset.${MARKER} .${MARKER}-site-name {
+  font-weight: bold;
+}
+fieldset.${MARKER} .${MARKER}-site-status,
+fieldset.${MARKER} .${MARKER}-retry {
+  margin-left: 8px;
+}
+fieldset.${MARKER} .${MARKER}-rows {
+  margin: 2px 0 0 16px;
+  padding: 0;
+  list-style: disc outside;
+}
+`;
+
 function el<K extends keyof HTMLElementTagNameMap>(doc: Document, tag: K, className = "", text = ""): HTMLElementTagNameMap[K] {
   const e = doc.createElement(tag);
   if (className) e.className = `${MARKER}-${className}`;
@@ -41,18 +94,20 @@ export function enhancePage(doc: Document, info: PageInfo, deps: UiDeps): HTMLEl
 
   const panel = el(doc, "fieldset", "panel");
   panel.classList.add(MARKER);
+  // The legend stays the first child; a browser reads only that one as the caption of the fieldset.
   panel.appendChild(el(doc, "legend", "legend", `Lyrics search (${deps.version})`));
+  panel.appendChild(el(doc, "style", "style", STYLE));
 
   const fields = el(doc, "div", "fields");
   const inputs = {} as Record<Field, HTMLInputElement>;
   for (const f of FIELDS) {
-    const label = el(doc, "label", "", `${LABELS[f]}: `);
+    const id = `${MARKER}-field-${f}`;
+    const label = el(doc, "label", "", `${LABELS[f]}:`);
+    label.htmlFor = id;
     const input = el(doc, "input", f);
     input.type = "text";
-    input.size = 28;
-    label.appendChild(input);
-    label.style.marginRight = "8px";
-    fields.appendChild(label);
+    input.id = id;
+    fields.append(label, input);
     inputs[f] = input;
   }
   inputs.title.value = info.title;
@@ -64,13 +119,10 @@ export function enhancePage(doc: Document, info: PageInfo, deps: UiDeps): HTMLEl
   const musixmatch = el(doc, "a", "musixmatch", "Search on Musixmatch");
   musixmatch.target = "_blank";
   musixmatch.rel = "noreferrer";
-  musixmatch.style.marginLeft = "8px";
   const status = el(doc, "span", "status");
-  status.style.marginLeft = "8px";
   const lookupRetry = el(doc, "button", "lookup-retry", "Retry lookup");
   lookupRetry.type = "button";
   lookupRetry.hidden = true;
-  lookupRetry.style.marginLeft = "8px";
   controls.append(search, musixmatch, status, lookupRetry);
   panel.appendChild(controls);
 
@@ -91,17 +143,12 @@ export function enhancePage(doc: Document, info: PageInfo, deps: UiDeps): HTMLEl
   const views: SiteView[] = deps.sites.map((site) => {
     const box = el(doc, "div", "site");
     box.dataset.site = site.id;
-    box.style.marginTop = "6px";
     const name = el(doc, "span", "site-name", site.name);
-    name.style.fontWeight = "bold";
     const siteStatus = el(doc, "span", "site-status");
-    siteStatus.style.marginLeft = "8px";
     const retry = el(doc, "button", "retry", "Retry");
     retry.type = "button";
     retry.hidden = true;
-    retry.style.marginLeft = "8px";
     const rows = el(doc, "ul", "rows");
-    rows.style.margin = "2px 0 0 16px";
     box.append(name, siteStatus, retry, rows);
     panel.appendChild(box);
     const view: SiteView = { site, status: siteStatus, retry, rows, seq: 0 };

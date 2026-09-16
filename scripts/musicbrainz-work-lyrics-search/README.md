@@ -33,6 +33,11 @@ Run `npm test` and `node build.mjs musicbrainz-work-lyrics-search` from the repo
 `test/fixtures/` are fragments of real search result pages captured on 2026-09-15 and MusicBrainz web service responses.
 Bump `@version` in `header.txt` before a release.
 
+The panel carries its own stylesheet, because the MusicBrainz form styles give a text input a fixed width that pushes
+the next label onto the line of the previous input. `addLink` fires a `focusout` event after it writes the URL, because
+the editor cleans the URL and replaces the input with a link on focus out. Without that event the row stays a half
+typed input.
+
 Each site is one module in `src/sites/`. 歌ネット answers a search with no hits with HTTP 404, which the module declares
 as `emptyStatus`. 歌詞ナビ has no class names, so its module finds the result table by its header row, which sits below
 a count row. 歌詞ナビ links a song as `/lyrics/<id>/`, but MusicBrainz accepts only the older
