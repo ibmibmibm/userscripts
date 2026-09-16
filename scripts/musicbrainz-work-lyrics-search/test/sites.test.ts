@@ -82,10 +82,10 @@ describe("kashinavi", () => {
     expect(kashinavi.buildUrl(titleJapanese)).toBe("https://kashinavi.com/search.php?kyoku=%83%8C%83%82%83%93&start=%31");
   });
 
-  it("parses title and artist rows from the result table, whose header row sits below the count row", () => {
+  it("parses rows from the result table, whose header row sits below the count row, and offers the song_view URL", () => {
     const rows = kashinavi.parse(siteDocument("kashinavi-search", "https://kashinavi.com/search.php?kyoku=Lemon&start=1"), kashinavi.origin);
     expect(rows.length).toBe(6);
-    expect(rows[0]).toEqual({ url: "https://kashinavi.com/lyrics/159368/", title: "Lime & Lemon", artist: "東方神起", lyricist: "", composer: "" });
+    expect(rows[0]).toEqual({ url: "https://kashinavi.com/song_view.html?159368", title: "Lime & Lemon", artist: "東方神起", lyricist: "", composer: "" });
     expect(rows[5].title).toBe("フェス!!最高 (from 2010.5.17 渋谷C.C.Lemonホール)");
     expect(rows[5].artist).toBe("グループ魂");
   });
@@ -107,8 +107,17 @@ describe("kashinavi", () => {
     </table>`;
     const doc = new JSDOM(html).window.document;
     expect(kashinavi.parse(doc, kashinavi.origin)).toEqual([
-      { url: "https://kashinavi.com/lyrics/1/", title: "Good", artist: "Artist", lyricist: "", composer: "" },
+      { url: "https://kashinavi.com/song_view.html?1", title: "Good", artist: "Artist", lyricist: "", composer: "" },
     ]);
+  });
+
+  it("keeps a lyrics URL that carries no numeric id", () => {
+    const html = `<table>
+      <tr><td></td><td>- - - ◆　曲名</td><td>- - - ◆　歌手名</td><td>- - - ◆　歌い出し</td><td>- - - ◆　ミニ情報</td></tr>
+      <tr><td></td><td><a href="/lyrics/new/">New</a></td><td><a href="/artist/1">Artist</a></td><td></td><td></td></tr>
+    </table>`;
+    const doc = new JSDOM(html).window.document;
+    expect(kashinavi.parse(doc, kashinavi.origin)[0].url).toBe("https://kashinavi.com/lyrics/new/");
   });
 
   it("drops a row whose link uses a javascript: scheme", () => {

@@ -35,5 +35,7 @@ Bump `@version` in `header.txt` before a release.
 
 Each site is one module in `src/sites/`. 歌ネット answers a search with no hits with HTTP 404, which the module declares
 as `emptyStatus`. 歌詞ナビ has no class names, so its module finds the result table by its header row, which sits below
-a count row. When a site changes its page structure, its status shows "No results parsed";
-update that module's `parse` and its fixture.
+a count row. 歌詞ナビ links a song as `/lyrics/<id>/`, but MusicBrainz accepts only the older
+`song_view.html?<id>` form, which redirects to the new page, so the module offers that form. Delete the rewrite after
+[STYLE-2855](https://tickets.metabrainz.org/browse/STYLE-2855) lands. When a site changes its page structure, its
+status shows "No results parsed"; update that module's `parse` and its fixture.

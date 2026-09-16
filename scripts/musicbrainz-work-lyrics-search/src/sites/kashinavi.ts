@@ -30,6 +30,16 @@ function findResultTable(doc: Document): Element | null {
   return null;
 }
 
+/**
+ * 歌詞ナビ moved its lyrics pages from song_view.html?<id> to /lyrics/<id>/. MusicBrainz still
+ * accepts the old form only (STYLE-2855), and the old form redirects to the new page, so the panel
+ * offers the old form. Delete this once MusicBrainz accepts /lyrics/<id>/.
+ */
+function oldLyricsUrl(origin: string, url: string): string {
+  const m = /\/lyrics\/(\d+)\/?$/.exec(url);
+  return m ? `${origin}/song_view.html?${m[1]}` : url;
+}
+
 export const kashinavi: Site = {
   id: "kashinavi",
   name: "歌詞ナビ",
@@ -52,7 +62,7 @@ export const kashinavi: Site = {
       if (!link) continue;
       const url = abs(origin, link.getAttribute("href"));
       if (!url) continue;
-      rows.push(row({ url, title: text(link), artist: text(cells[2]?.querySelector("a")) }));
+      rows.push(row({ url: oldLyricsUrl(origin, url), title: text(link), artist: text(cells[2]?.querySelector("a")) }));
     }
     return rows;
   },

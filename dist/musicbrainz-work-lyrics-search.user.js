@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MusicBrainz work lyrics search
 // @namespace    https://github.com/ibmibmibm/userscripts
-// @version      1.0.3
+// @version      1.0.4
 // @description  Search Japanese lyrics sites from a MusicBrainz work edit page and add the lyrics page to the external links
 // @author       Shen-Ta Hsieh
 // @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/musicbrainz-work-lyrics-search.user.js
@@ -266,6 +266,10 @@
     }
     return null;
   }
+  function oldLyricsUrl(origin, url) {
+    const m = /\/lyrics\/(\d+)\/?$/.exec(url);
+    return m ? `${origin}/song_view.html?${m[1]}` : url;
+  }
   var kashinavi = {
     id: "kashinavi",
     name: "歌詞ナビ",
@@ -288,7 +292,7 @@
         if (!link) continue;
         const url = abs(origin, link.getAttribute("href"));
         if (!url) continue;
-        rows.push(row({ url, title: text(link), artist: text(cells[2]?.querySelector("a")) }));
+        rows.push(row({ url: oldLyricsUrl(origin, url), title: text(link), artist: text(cells[2]?.querySelector("a")) }));
       }
       return rows;
     }
@@ -622,7 +626,7 @@
   }
 
   // scripts/musicbrainz-work-lyrics-search/src/main.ts
-  var VERSION = true ? "1.0.3" : "dev";
+  var VERSION = true ? "1.0.4" : "dev";
   var NAME_INPUT = "#id-edit-work\\.name";
   function pageInfo(doc, href) {
     let path;
