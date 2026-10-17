@@ -1,0 +1,6 @@
+{"events":[
+{"tStartMs":0,"dDurationMs":2003920,"id":1,"wpWinPosId":1,"wsWinStyleId":1},
+{"tStartMs":3120,"dDurationMs":4520,"wWinId":1,"segs":[{"utf8":"Today"},{"utf8":" I'm","tOffsetMs":280},{"utf8":" speaking","tOffsetMs":400},{"utf8":" with","tOffsetMs":800},{"utf8":" a","tOffsetMs":920},{"utf8":" French","tOffsetMs":960}]},
+{"tStartMs":4390,"dDurationMs":3250,"wWinId":1,"aAppend":1,"segs":[{"utf8":"\n"}]},
+{"tStartMs":4400,"dDurationMs":6400,"wWinId":1,"segs":[{"utf8":"mathematician"},{"utf8":" Hugo","tOffsetMs":960},{"utf8":" Duminil-Copin,","tOffsetMs":1840},{"utf8":" the","tOffsetMs":3040}]}
+]}

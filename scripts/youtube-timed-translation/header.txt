@@ -1,0 +1,16 @@
+// ==UserScript==
+// @name         YouTube timed translation
+// @namespace    https://github.com/ibmibmibm/userscripts
+// @version      1.1.0
+// @description  Show translated YouTube subtitles one sentence at a time, at the moment the words are spoken
+// @author       Shen-Ta Hsieh
+// @downloadURL  https://github.com/ibmibmibm/userscripts/raw/main/dist/youtube-timed-translation.user.js
+// @updateURL    https://github.com/ibmibmibm/userscripts/raw/main/dist/youtube-timed-translation.user.js
+// @match        https://www.youtube.com/*
+// @grant        GM_xmlhttpRequest
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_registerMenuCommand
+// @connect      translate.googleapis.com
+// @run-at       document-idle
+// ==/UserScript==
